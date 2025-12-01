@@ -37,5 +37,7 @@ export const validationSchema = Joi.object({
 	OPENSTACK_GITLAB_HOST: Joi.string(),
 	OPENSTACK_GITLAB_TOKEN: Joi.string(),
 	// collector integration
-	COLLECTOR_API_KEY: Joi.string()
+	COLLECTOR_API_KEY: Joi.string(),
+	// mock auth (for development/testing without OIDC)
+	MOCK_AUTH_ENABLED: Joi.boolean().default(false)
 });

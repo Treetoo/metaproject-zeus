@@ -47,6 +47,7 @@ services:
       - OPENSTACK_GITLAB_HOST
       - OPENSTACK_GITLAB_TOKEN
       - COLLECTOR_API_KEY
+      - MOCK_AUTH_ENABLED
     expose:
       - 3000
     volumes:

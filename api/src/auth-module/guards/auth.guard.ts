@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { UserMapper } from '../../users-module/services/user.mapper';
@@ -11,7 +12,8 @@ export class AuthGuard implements CanActivate {
 		private readonly usersModel: UsersModel,
 		private readonly tokenService: TokenService,
 		private readonly reflector: Reflector,
-		private readonly userMapper: UserMapper
+		private readonly userMapper: UserMapper,
+		private readonly configService: ConfigService
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,6 +27,19 @@ export class AuthGuard implements CanActivate {
 		}
 
 		const request = context.switchToHttp().getRequest();
+
+		// ============================================================
+		// MOCK AUTH MODE - Temporarily disabled OIDC for testing
+		// ============================================================
+		const mockAuthEnabled = this.configService.get<boolean>('MOCK_AUTH_ENABLED', false);
+		if (mockAuthEnabled) {
+			return this.handleMockAuth(request);
+		}
+		// ============================================================
+		// END MOCK AUTH MODE
+		// ============================================================
+
+		// --- OIDC AUTH (commented out for mock mode, uncomment to restore) ---
 		const authorizationHeader = request.headers['authorization'];
 
 		// authorization header not present
@@ -47,6 +62,37 @@ export class AuthGuard implements CanActivate {
 		if (!user) {
 			throw new UnauthorizedException();
 		}
+
+		request.user = this.userMapper.toUserDto(user, forceUserRole);
+		return true;
+		// --- END OIDC AUTH ---
+	}
+
+	/**
+	 * Handle mock authentication using X-Mock-User-Id header
+	 * This is only active when MOCK_AUTH_ENABLED=true
+	 */
+	private async handleMockAuth(request: any): Promise<boolean> {
+		const mockUserIdHeader = request.headers['x-mock-user-id'];
+
+		if (!mockUserIdHeader) {
+			throw new UnauthorizedException('Mock auth enabled but X-Mock-User-Id header not provided');
+		}
+
+		const mockUserId = parseInt(mockUserIdHeader, 10);
+		if (isNaN(mockUserId)) {
+			throw new UnauthorizedException('X-Mock-User-Id must be a valid number');
+		}
+
+		const user = await this.usersModel.findUserById(mockUserId);
+		if (!user) {
+			throw new UnauthorizedException(`Mock user with ID ${mockUserId} not found`);
+		}
+
+		// Handle step-up header for mock mode too
+		const stepUpHeader = request.headers['x-step-up'];
+		const forceUserRole = !stepUpHeader || stepUpHeader !== 'true';
+		request.isStepUp = !forceUserRole;
 
 		request.user = this.userMapper.toUserDto(user, forceUserRole);
 		return true;
