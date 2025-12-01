@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { Role, User } from 'resource-manager-database';
 import { InvalidUserApiException } from '../../error-module/errors/users/invalid-user.api-exception';
 import { UserInfoDto } from '../dto/user-info.dto';
+import { MockSignInDto } from '../dto/mock-sign-in.dto';
 import { UsersModel } from '../../users-module/models/users.model';
 import { ProjectModel } from '../../project-module/models/project.model';
 
@@ -104,5 +105,70 @@ export class AuthService {
 		}
 
 		return 'user';
+	}
+
+	/**
+	 * Mock sign-in for development/testing without OIDC
+	 * Creates or updates a user with the provided mock data
+	 */
+	async mockSignIn(mockData: MockSignInDto): Promise<User | null> {
+		const userId = await this.dataSource.transaction(async (manager) => {
+			const role = await manager.getRepository(Role).findOneBy({
+				codeName: mockData.role
+			});
+
+			if (!role) {
+				throw new InvalidUserApiException();
+			}
+
+			const userRepository = manager.getRepository(User);
+
+			// Try to find user by externalId first
+			let user = await userRepository.findOne({
+				where: {
+					source: 'perun',
+					externalId: mockData.externalId
+				}
+			});
+
+			// If not found by externalId, try to find by email
+			if (!user) {
+				user = await userRepository.findOne({
+					where: {
+						source: 'perun',
+						email: mockData.email
+					}
+				});
+			}
+
+			if (!user) {
+				// Create new user
+				user = userRepository.create({
+					source: 'perun',
+					externalId: mockData.externalId,
+					email: mockData.email,
+					emailVerified: true, // Mock users are considered verified
+					username: mockData.username,
+					name: mockData.name,
+					locale: mockData.locale || 'en',
+					roleId: role.id
+				});
+			} else {
+				// Update existing user
+				user.externalId = mockData.externalId;
+				user.email = mockData.email;
+				user.emailVerified = true;
+				user.username = mockData.username;
+				user.name = mockData.name;
+				user.locale = mockData.locale || user.locale || 'en';
+				user.roleId = role.id;
+			}
+
+			const savedUser = await userRepository.save(user);
+			await this.projectModel.ensurePersonalProject(manager, savedUser);
+			return savedUser.id;
+		});
+
+		return this.usersModel.findUserById(userId);
 	}
 }

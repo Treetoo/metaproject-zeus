@@ -6,6 +6,7 @@ import { ProjectModule } from '../project-module/project.module';
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
+import { MockAuthController } from './controllers/mock-auth.controller';
 import { OidcService } from './services/oidc.service';
 import { TokenService } from './services/token.service';
 import { TokenCache } from './cache/token.cache';
@@ -23,7 +24,7 @@ import { AuthMapper } from './mapper/auth.mapper';
 		TokenCache,
 		AuthMapper
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, MockAuthController],
 	imports: [UsersModule, HttpModule, ProjectModule]
 })
 export class AuthModule {}
