@@ -4,7 +4,9 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { PublicationDto } from '../dto/publication.dto';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
+import { OrcidNotFoundApiException } from '../../error-module/errors/publications/orcid-not-found.api-exception';
 import { PublicationMapper } from '../mapper/publication.mapper';
+import { OrcidWorksListDto } from '../dto/orcid-work.dto';
 
 @Injectable()
 export class ApiPublicationService {
@@ -24,33 +26,57 @@ export class ApiPublicationService {
 		this.mailTo = mailTo;
 	}
 
+	async getDoisByOrcid(orcid: string): Promise<OrcidWorksListDto> {
+		const response = await this.getWorksByOrcid(orcid);
+		return this.publicationMapper.mapOrcidApiResponseToDto(response.data, orcid);
+	}
+
 	async getPublicationByDoi(doi: string): Promise<PublicationDto> {
-		const source$ = this.getCrossRefResponse(`works/${doi}`, 'GET');
+		const response = await this.getWorkByDoi(doi);
+		return this.publicationMapper.mapWorkApiResponseToDto(response.data);
+	}
+
+	// Semantic wrappers (private implementation details)
+	private async getWorksByOrcid(orcid: string) {
 		try {
-			const response = await lastValueFrom(source$);
-			return this.publicationMapper.mapWorkApiResponseToDto(response.data);
+			return await this.fetchExternalApi(
+				'https://api.openalex.org',
+				`works?filter=author.orcid:${orcid}`
+			);
 		} catch (error) {
-			const response = error?.response;
-
-			if (!response) {
-				throw error;
+			if (error.response?.status === 404) {
+				throw new OrcidNotFoundApiException();
 			}
-
-			if (response.status === 404) {
-				throw new PublicationNotFoundApiException();
-			}
-
 			throw error;
 		}
 	}
 
-	private getCrossRefResponse = (url: string, method: 'GET') => {
-		return this.httpService.request({
-			url: 'https://api.crossref.org/' + url,
-			method,
+	private async getWorkByDoi(doi: string) {
+		console.log(this.getWorksByOrcid("0000-0002-8529-9990"))
+		try {
+			return await this.fetchExternalApi(
+				'https://api.crossref.org',
+				`works/${doi}`
+			);
+		} catch (error) {
+			if (error.response?.status === 404) {
+				throw new PublicationNotFoundApiException();
+			}
+			throw error;
+		}
+	}
+
+	// Generic HTTP layer
+	private async fetchExternalApi(baseUrl: string, endpoint: string) {
+		const response$ = this.httpService.request({
+			url: `${baseUrl}/${endpoint}`,
+			method: 'GET',
 			headers: {
 				'User-Agent': `ResourceManager/1.0 (mailto:${this.mailTo})`
-			}
+			},
+			timeout: 10000
 		});
-	};
+
+		return lastValueFrom(response$);
+	}
 }

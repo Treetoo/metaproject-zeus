@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Publication } from 'resource-manager-database';
 import { PublicationDetailDto } from '../dto/publication-detail.dto';
-import { OrcidWorksListDto, OrcidWorkDto } from '../dto/orcid-work.dto';
 
 @Injectable()
 export class PublicationMapper {
@@ -12,35 +11,6 @@ export class PublicationMapper {
 			year: data.message.created['date-parts'][0][0],
 			uniqueId: data.message.DOI,
 			journal: data.message['container-title'][0]
-		};
-	}
-
-	public mapOrcidApiResponseToDto(data: any, orcid: string): OrcidWorksListDto {
-		const works = (data.results || []).map((work: any): OrcidWorkDto => {
-			const doi = work.doi ? work.doi.replace('https://doi.org/', '') : '';
-			const title = work.display_name || work.title || '';
-
-			let authors: string | undefined;
-			if (work.authorships && Array.isArray(work.authorships)) {
-				authors = work.authorships
-					.map((authorship: any) => authorship.author?.display_name || authorship.raw_author_name)
-					.filter(Boolean)
-					.join(', ');
-			}
-
-			const year = work.publication_year;
-
-			return {
-				doi,
-				title,
-				authors,
-				year
-			};
-		});
-
-		return {
-			orcid: orcid,
-			works
 		};
 	}
 
