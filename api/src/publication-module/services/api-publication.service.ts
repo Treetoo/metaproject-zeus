@@ -32,11 +32,11 @@ export class ApiPublicationService {
 	}
 
 	async getPublicationByDoi(doi: string): Promise<PublicationDto> {
+		console.log("ingetpubbydoi")
 		const response = await this.getWorkByDoi(doi);
 		return this.publicationMapper.mapWorkApiResponseToDto(response.data);
 	}
 
-	// Semantic wrappers (private implementation details)
 	private async getWorksByOrcid(orcid: string) {
 		try {
 			return await this.fetchExternalApi(
@@ -52,7 +52,8 @@ export class ApiPublicationService {
 	}
 
 	private async getWorkByDoi(doi: string) {
-		console.log(this.getWorksByOrcid("0000-0002-8529-9990"))
+		console.log(await this.getDoisByOrcid("0000-0002-8529-9990"))
+		console.log("Hello i'm here")
 		try {
 			return await this.fetchExternalApi(
 				'https://api.crossref.org',

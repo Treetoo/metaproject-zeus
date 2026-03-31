@@ -8,7 +8,7 @@ import { ApiPublicationService } from '../services/api-publication.service';
 @Controller('/publication-search')
 @ApiTags('Publication')
 export class PublicationSearchController {
-	constructor(private readonly apiPublicationService: ApiPublicationService) {}
+	constructor(private readonly apiPublicationService: ApiPublicationService) { }
 
 	@Get('/doi/:doi')
 	@Public()
@@ -27,4 +27,23 @@ export class PublicationSearchController {
 	public async getPublicationByDoi(@Param('doi') doi: string) {
 		return this.apiPublicationService.getPublicationByDoi(doi);
 	}
+
+	@Get('/orcid/:orcid')
+	@Public()
+	@ApiOperation({
+		summary: 'Get publications by ORCID.',
+		description: 'Get publications by ORCID.'
+	})
+	@ApiOkResponse({
+		description: 'ORCID.',
+		type: PublicationDto
+	})
+	@ApiNotFoundResponse({
+		description: 'ORCID not found.',
+		type: PublicationNotFoundApiException
+	})
+	public async getPublicationByOrcid(@Param('orcid') orcid: string) {
+		return this.apiPublicationService.getDoisByOrcid(orcid);
+	}
+
 }
