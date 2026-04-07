@@ -15,12 +15,12 @@ export class Publication {
 	id: number;
 
 	@Column({
-		length: 1024
+		length: 4096
 	})
 	title: string;
 
 	@Column({
-		length: 1024
+		length: 4096
 	})
 	author: string;
 

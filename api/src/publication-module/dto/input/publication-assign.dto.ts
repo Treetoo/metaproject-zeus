@@ -8,5 +8,5 @@ export class CreateOwnedPublicationDto {
 	year: number;
 	journal: string;
 	uniqueId?: string;
-	source: 'doi' | 'manual';
+	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'ark' | 'issn' | 'handle';
 }

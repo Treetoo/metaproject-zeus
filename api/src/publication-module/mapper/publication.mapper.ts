@@ -1,26 +1,74 @@
 import { Injectable } from '@nestjs/common';
 import { Publication } from 'resource-manager-database';
 import { PublicationDetailDto } from '../dto/publication-detail.dto';
-import { OrcidWorksListDto, OrcidWorkDto } from '../dto/orcid-work.dto';
+import { PublicationDto } from '../dto/publication.dto';
+import { ResearcherWorksListDto } from '../dto/researcher-works.dto';
 
 @Injectable()
 export class PublicationMapper {
-	public mapWorkApiResponseToDto(data: any) {
+	public mapCrossRefApiResponseToDto(data: any): PublicationDto {
 		return {
 			title: data.message.title[0],
 			authors: data.message.author.map((author: any) => author.given + ' ' + author.family).join(', '),
 			year: data.message.created['date-parts'][0][0],
 			uniqueId: data.message.DOI,
-			journal: data.message['container-title'][0]
+			journal: data.message['container-title'][0],
+			source: 'doi',
 		};
 	}
 
-	public mapOrcidApiResponseToDto(data: any, orcid: string): OrcidWorksListDto {
-		const works = (data.results || []).map((work: any): OrcidWorkDto => {
-			const doi = work.doi ? work.doi.replace('https://doi.org/', '') : '';
+	public mapDataCiteApiResponseToDto(data: any): PublicationDto {
+		return {
+			title: data.attributes.titles[0].title,
+			authors: data.attributes.creators.map((author: any) => author.name.replace(',', ' ')).join(', '),
+			year: data.attributes.publicationYear,
+			uniqueId: data.attributes.doi,
+			journal: data.attributes.publisher,
+			source: 'doi',
+		};
+	}
+
+	public mapPubmedApiResponseToDto(data: any, id: string): PublicationDto {
+		const match = data[id].pubdate.match(/^(\d{4})/);
+		return {
+			title: data[id].title,
+			authors: data[id].authors.map((author: any) => author.name).join(', '),
+			year: match ? parseInt(match[1]) : 1900,
+			uniqueId: id,
+			journal: data.fulljournalname || data.source || "missing",
+			source: 'pubmed',
+		}
+	}
+
+	public mapNmaApiResponseToDto(data: any): PublicationDto {
+		return {
+			title: data.metadata.title,
+			authors: data.metadata.creators.map((author: any) => author.person_or_org.name.replace(',', ' ')).join(', '),
+			year: (new Date(Date.parse(data.metadata.publication_date)).getFullYear()),
+			uniqueId: data.pids.oai.identifier,
+			journal: data.metadata.publisher ?? "Unknown",
+			source: 'nma',
+		};
+	}
+
+	public mapIsbnApiResponseToDto(data: any, isbn: string): PublicationDto {
+		const volumeInfo = data.volumeInfo;
+		return {
+			title: volumeInfo.title,
+			authors: volumeInfo.authors.join(', '),
+			year: new Date(Date.parse(volumeInfo.publishedDate)).getFullYear(),
+			uniqueId: isbn,
+			journal: volumeInfo.publisher,
+			source: 'isbn',
+		};
+	}
+
+	public mapOrcidApiResponseToDto(data: any, id: string): ResearcherWorksListDto {
+		const works = (data.results || []).map((work: any): PublicationDto => {
+			const workId = work.id;
 			const title = work.display_name || work.title || '';
 
-			let authors: string | undefined;
+			let authors: string = "";
 			if (work.authorships && Array.isArray(work.authorships)) {
 				authors = work.authorships
 					.map((authorship: any) => authorship.author?.display_name || authorship.raw_author_name)
@@ -30,16 +78,19 @@ export class PublicationMapper {
 
 			const year = work.publication_year;
 
+
 			return {
-				doi,
-				title,
-				authors,
-				year
+				title: title,
+				authors: authors,
+				year: year,
+				uniqueId: workId,
+				journal: work.primary_location.raw_source_name,
+				source: 'orcid',
 			};
 		});
 
 		return {
-			orcid: orcid,
+			id: id,
 			works
 		};
 	}

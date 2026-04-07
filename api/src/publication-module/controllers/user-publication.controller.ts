@@ -20,7 +20,7 @@ export class UserPublicationController {
 		private readonly publicationService: PublicationService,
 		private readonly paginationMapper: PaginationMapper,
 		private readonly publicationMapper: PublicationMapper
-	) {}
+	) { }
 
 	@Get()
 	@MinRoleCheck(RoleEnum.USER)

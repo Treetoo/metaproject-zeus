@@ -10,6 +10,25 @@ import { ApiPublicationService } from '../services/api-publication.service';
 export class PublicationSearchController {
 	constructor(private readonly apiPublicationService: ApiPublicationService) { }
 
+	@Get('/publication-id/:id')
+	@Public()
+	@ApiOperation({
+		summary: 'Get publication by id.',
+		description: 'Get publication by id.'
+	})
+	@ApiOkResponse({
+		description: 'Publication.',
+		type: PublicationDto
+	})
+	@ApiNotFoundResponse({
+		description: 'Publication not found.',
+		type: PublicationNotFoundApiException
+	})
+	public async getPublicationById(@Param('id') id: string) {
+		return this.apiPublicationService.getPublicationById(id);
+	}
+
+
 	@Get('/doi/:doi')
 	@Public()
 	@ApiOperation({
@@ -28,22 +47,22 @@ export class PublicationSearchController {
 		return this.apiPublicationService.getPublicationByDoi(doi);
 	}
 
-	@Get('/orcid/:orcid')
+	@Get('/researcher-id/:id')
 	@Public()
 	@ApiOperation({
-		summary: 'Get publications by ORCID.',
-		description: 'Get publications by ORCID.'
+		summary: 'Get publications by researcher ID.',
+		description: 'Get publications by researcher ID.'
 	})
 	@ApiOkResponse({
-		description: 'ORCID.',
+		description: 'ID.',
 		type: PublicationDto
 	})
 	@ApiNotFoundResponse({
-		description: 'ORCID not found.',
+		description: 'Researcher ID not found.',
 		type: PublicationNotFoundApiException
 	})
-	public async getPublicationByOrcid(@Param('orcid') orcid: string) {
-		return this.apiPublicationService.getDoisByOrcid(orcid);
+	public async getPublicationByResearherId(@Param('id') id: string) {
+		return this.apiPublicationService.getPublicationsByResearcherId(id);
 	}
 
 }
