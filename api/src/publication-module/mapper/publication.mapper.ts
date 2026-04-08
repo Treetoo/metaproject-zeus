@@ -53,12 +53,13 @@ export class PublicationMapper {
 
 	public mapIsbnApiResponseToDto(data: any, isbn: string): PublicationDto {
 		const volumeInfo = data.volumeInfo;
+		console.log(volumeInfo)
 		return {
 			title: volumeInfo.title,
-			authors: volumeInfo.authors.join(', '),
-			year: new Date(Date.parse(volumeInfo.publishedDate)).getFullYear(),
+			authors: volumeInfo.authors?.join(', ') ?? "Unknown",
+			year: new Date(Date.parse(volumeInfo.publishedDate)).getFullYear() ?? 1900,
 			uniqueId: isbn,
-			journal: volumeInfo.publisher,
+			journal: volumeInfo.publisher ?? "Unknown",
 			source: 'isbn',
 		};
 	}

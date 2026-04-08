@@ -1,9 +1,1 @@
-export enum IdentifierTypeDto {
-	ARK,
-	Pubmed,
-	DOI,
-	Handle,
-	ISBN,
-	ISSN,
-	ORCID,
-}
+export type PublicationIdentifierTypeDto = "ark" | "pubmed" | "doi" | "handle" | "isbn" | "issn" | "orcid" | 'nma' | "unknown";

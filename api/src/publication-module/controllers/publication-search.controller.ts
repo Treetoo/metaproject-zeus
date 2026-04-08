@@ -10,25 +10,6 @@ import { ApiPublicationService } from '../services/api-publication.service';
 export class PublicationSearchController {
 	constructor(private readonly apiPublicationService: ApiPublicationService) { }
 
-	@Get('/publication-id/:id')
-	@Public()
-	@ApiOperation({
-		summary: 'Get publication by id.',
-		description: 'Get publication by id.'
-	})
-	@ApiOkResponse({
-		description: 'Publication.',
-		type: PublicationDto
-	})
-	@ApiNotFoundResponse({
-		description: 'Publication not found.',
-		type: PublicationNotFoundApiException
-	})
-	public async getPublicationById(@Param('id') id: string) {
-		return this.apiPublicationService.getPublicationById(id);
-	}
-
-
 	@Get('/doi/:doi')
 	@Public()
 	@ApiOperation({

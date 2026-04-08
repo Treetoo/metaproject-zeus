@@ -7,7 +7,7 @@ import { PublicationNotFoundApiException } from '../../error-module/errors/publi
 import { ResearcherIdNotFoundApiException } from '../../error-module/errors/publications/researcher-id-not-found.api-exception';
 import { PublicationMapper } from '../mapper/publication.mapper';
 import { ResearcherWorksListDto } from '../dto/researcher-works.dto';
-import { type PublicationInputDto } from '../dto/input/publication-input.dto';
+import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
 
 type DoiResolver = {
 	name: string;
@@ -49,26 +49,15 @@ export class ApiPublicationService {
 	}
 
 
-	async getPublicationById(id: string): Promise<PublicationDto> {
-		let publication: PublicationDto;
+	async getPublicationByIdAndType(id: string, type: PublicationIdentifierTypeDto): Promise<PublicationDto> {
+		if (type === 'doi') return await this.getPublicationByDoi(id)
+		if (type === 'handle') console.log("in handle");
+		if (type === 'ark') console.log("in ark");
+		if (type === 'pubmed') return await this.getPublicationByPubmedId(id);
+		if (type === 'nma') return await this.getPublicationByNma(id);
+		if (type === 'issn') console.log("in handle");
+		if (type === 'isbn') return await this.getPublicationByIsbn(id);
 
-		const patterns = {
-			DOI: /^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i,
-			HANDLE: /^(hdl:)?\d+(\.\d+)*\/.+$/i,
-			ARK: /^ark:\/\d+\/.+$/i,
-			PUBMED: /^(PMID:\s*)?\d+$/i,
-			NMA: /^https:\/\/nma\.eosc\.cz\/.*/,// adjust if you have a stricter format
-		};
-
-
-
-		if (patterns.DOI.test(id)) publication = await this.getPublicationByDoi(id)
-		else if (patterns.HANDLE.test(id)) console.log("in handle");
-		// if (patterns.ARK.test(id)) return "ARK";
-		else if (patterns.PUBMED.test(id)) publication = await this.getPublicationByPubmedId(id);
-		if (patterns.NMA.test(id)) publication = await this.getPublicationByNma(id);
-
-		createPublication
 
 		return this.getPublicationByDoi(id)
 	}
@@ -86,10 +75,11 @@ export class ApiPublicationService {
 	}
 
 	async getPublicationByIsbn(isbn: string): Promise<PublicationDto> {
-		const baseUrl = 'https://www.googleapis.com/books/v1/';
-		const endPoint = `volumes?q=isbb:${isbn}`;
+		require('dotenv').config()
+		const baseUrl = 'https://www.googleapis.com/books/v1';
+		const endPoint = `volumes?q=isbn:${isbn}&key=${process.env["GOOGLE_BOOKS_API"]}`;
 		const response = await this.fetchPubIdResolver(baseUrl, endPoint);
-		return this.publicationMapper.mapPubmedApiResponseToDto(response.data.items[0], isbn);
+		return this.publicationMapper.mapIsbnApiResponseToDto(response.data.items[0], isbn);
 	}
 
 	async getPublicationByDoi(doi: string): Promise<PublicationDto> {
@@ -113,10 +103,11 @@ export class ApiPublicationService {
 	}
 
 	private async getWorksByResearcherId(id: string) {
+		console.log(id)
 		try {
 			return await this.fetchExternalApi(
 				'https://api.openalex.org',
-				`works?filter=author.id:${id}`
+				`works?filter=author.orcid:${id}`
 			);
 		} catch (error) {
 			if (error.response?.status === 404) {
@@ -139,6 +130,7 @@ export class ApiPublicationService {
 
 	// Generic HTTP layer
 	private async fetchExternalApi(baseUrl: string, endpoint: string) {
+		console.log(baseUrl + (endpoint ? `/${endpoint}` : ""));
 		const response$ = this.httpService.request({
 			url: baseUrl + (endpoint ? `/${endpoint}` : ""),
 			method: 'GET',
