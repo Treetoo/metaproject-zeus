@@ -1,3 +1,4 @@
+import { PublicationIdentifierTypeDto } from "../identifier-type.dto"
 export class AssignPublicationDto {
 	projectId: number;
 }
@@ -8,5 +9,10 @@ export class CreateOwnedPublicationDto {
 	year: number;
 	journal: string;
 	uniqueId?: string;
-	source: 'doi' | 'manual';
+	source: Exclude<PublicationIdentifierTypeDto, 'unknown'> | 'manual';
+}
+
+export class CreateOwnedPublicationByIdDto {
+	uniqueId: string;
+	type: PublicationIdentifierTypeDto;
 }

@@ -4,9 +4,9 @@
 	branch = master
 [submodule "gui"]
 	path = gui
-	url = git@github.com:pitris90/metaproject-zeus-gui.git
+	url = git@github.com:Treetoo/metaproject-zeus-gui.git
 	branch = master
 [submodule "collector"]
 	path = collector
-	url = git@github.com:pitris90/metaproject-zeus-collector.git
+	url = git@github.com:Treetoo/metaproject-zeus-collector.git
 	branch = main

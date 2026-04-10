@@ -23,4 +23,6 @@ export class PublicationDto {
 	 * Unique identifier of the publication. Either DOI, ISSN or ISBN.
 	 */
 	uniqueId: string;
+
+	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'ark' | 'issn' | 'handle' | 'orcid' | 'pubmed';
 }

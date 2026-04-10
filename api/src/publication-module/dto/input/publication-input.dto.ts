@@ -27,7 +27,7 @@ export class PublicationInputDto {
 	/**
 	 * Source of the publication. Either it was searched by DOI or added manually.
 	 */
-	source: 'doi' | 'manual';
+	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'ark' | 'issn' | 'handle';
 }
 
 export class PublicationRequestListDto {

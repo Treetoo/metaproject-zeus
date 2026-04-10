@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Publication } from 'resource-manager-database';
 import { PublicationInputDto } from '../dto/input/publication-input.dto';
-import { AssignPublicationDto, CreateOwnedPublicationDto } from '../dto/input/publication-assign.dto';
+import { AssignPublicationDto, CreateOwnedPublicationDto, CreateOwnedPublicationByIdDto } from '../dto/input/publication-assign.dto';
 import { ProjectPermissionService } from '../../project-module/services/project-permission.service';
 import { ProjectPermissionEnum } from '../../project-module/enums/project-permission.enum';
 import { ProjectNotFoundApiException } from '../../error-module/errors/projects/project-not-found.api-exception';
@@ -14,6 +14,9 @@ import { PublicationModel } from '../models/publication.model';
 import { ProjectPublicationModel } from '../models/project-publication.model';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 import { PublicationRequiresProjectContextApiException } from '../../error-module/errors/publications/publication-requires-project-context.api-exception';
+import { IdentifierDetectionService } from './identifier-detection.service';
+import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto'
+import { ApiPublicationService } from './api-publication.service';
 
 @Injectable()
 export class PublicationService {
@@ -22,11 +25,65 @@ export class PublicationService {
 		private readonly dataSource: DataSource,
 		private readonly projectModel: ProjectModel,
 		private readonly publicationModel: PublicationModel,
-		private readonly projectPublicationModel: ProjectPublicationModel
-	) {}
+		private readonly projectPublicationModel: ProjectPublicationModel,
+		private readonly apiPublicationService: ApiPublicationService
+	) { }
 
 	async getUserPublications(userId: number, pagination: Pagination, sorting: Sorting | null) {
 		return this.publicationModel.getUserPublications(userId, pagination, sorting);
+	}
+
+
+
+	async createOwnedPublicationById(userId: number, input: CreateOwnedPublicationByIdDto) {
+		if (input.type !== 'unknown') {
+			return this.createBySpecificType(userId, input.uniqueId, input.type);
+		}
+
+		input.type = IdentifierDetectionService.detect(input.uniqueId);
+		await this.createBySpecificType(userId, input.uniqueId, input.type);
+
+	}
+
+	private async createBySpecificType(userId: number, uniqueId: string, type: PublicationIdentifierTypeDto) {
+		if (type === 'unknown') {
+			console.log("Invalid type")
+			throw new PublicationNotFoundApiException();
+		}
+		console.log(uniqueId)
+		console.log(type)
+		const externalData = await this.apiPublicationService.getPublicationByIdAndType(uniqueId, type);
+		console.log(externalData)
+
+		if (!externalData) {
+			throw new PublicationNotFoundApiException();
+		}
+
+		return this.createOwnedPublication(userId, {
+			...externalData,
+			source: type,
+			uniqueId: uniqueId
+		});
+	}
+
+
+	async updateOwnedPublication(userId: number, publicationId: number, input: CreateOwnedPublicationDto) {
+		const publication = await this.publicationModel.findOwnedByUser(publicationId, userId);
+		if (!publication) {
+			throw new PublicationNotFoundApiException();
+		}
+
+		await this.dataSource
+			.createQueryBuilder()
+			.update(Publication)
+			.set({
+				title: input.title,
+				author: input.authors,
+				year: input.year,
+				journal: input.journal,
+			})
+			.where('id = :id AND ownerId = :ownerId', { id: publicationId, ownerId: userId })
+			.execute();
 	}
 
 	async createOwnedPublication(userId: number, input: CreateOwnedPublicationDto) {
