@@ -15,12 +15,12 @@ export class Publication {
 	id: number;
 
 	@Column({
-		length: 4096
+		length: 8192
 	})
 	title: string;
 
 	@Column({
-		length: 4096
+		length: 8192
 	})
 	author: string;
 
@@ -40,6 +40,15 @@ export class Publication {
 	@Column()
 	@Index()
 	ownerId: number;
+
+	@Column({ type: 'enum', enum: ['pending', 'approved', 'rejected'], default: 'pending' })
+	status: 'pending' | 'approved' | 'rejected';
+
+	@Column({ type: 'float', nullable: true })
+	weight: number | null;
+
+	@Column({ nullable: true })
+	reviewerId: number | null;
 
 	@ManyToOne(() => User)
 	owner: User;

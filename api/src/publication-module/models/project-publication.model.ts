@@ -14,7 +14,7 @@ export class ProjectPublicationModel {
 			.createQueryBuilder()
 			.insert()
 			.into(ProjectPublication)
-			.values({ projectId, publicationId, addedByUserId } as any)
+			.values({ projectId, publicationId, addedByUserId, status: 'pending' } as any)
 			.orIgnore()
 			.execute();
 	}
