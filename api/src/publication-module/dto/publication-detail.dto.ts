@@ -33,4 +33,6 @@ export class PublicationDetailDto {
 	 * True if the current user is the owner of this publication.
 	 */
 	isOwner: boolean;
+
+	status: 'pending' | 'approved' | 'rejected';
 }

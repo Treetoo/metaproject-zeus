@@ -142,7 +142,11 @@ export class PublicationService {
 			pagination,
 			sorting
 		);
-		const publications = links.map((link) => link['publication']);
+		const publications = links.map((link) => {
+			let r = link['publication'];
+			r.status = link['status'];
+			return r;
+		});
 		return [publications, count] as [Publication[], number];
 	}
 
