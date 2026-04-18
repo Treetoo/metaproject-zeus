@@ -41,7 +41,7 @@ export class PublicationApprovalController {
 			projectId: pp.project.id,    // Include project info if needed
 			projectName: pp.project.title,
 			requestedBy: pp.addedByUserId,
-			//createdAt: pp.createdAt
+			createdAt: pp.time?.createdAt
 		}));
 
 		// Use pagination mapper to format response correctly
