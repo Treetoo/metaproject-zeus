@@ -35,13 +35,13 @@ export class PublicationService {
 
 
 
-	async createOwnedPublicationById(userId: number, input: CreateOwnedPublicationByIdDto) {
+	async createOwnedPublicationById(userId: number, input: CreateOwnedPublicationByIdDto): Promise<number> {
 		if (input.type !== 'unknown') {
 			return this.createBySpecificType(userId, input.uniqueId, input.type);
 		}
 
 		input.type = IdentifierDetectionService.detect(input.uniqueId);
-		await this.createBySpecificType(userId, input.uniqueId, input.type);
+		return this.createBySpecificType(userId, input.uniqueId, input.type);
 
 	}
 
@@ -86,8 +86,8 @@ export class PublicationService {
 			.execute();
 	}
 
-	async createOwnedPublication(userId: number, input: CreateOwnedPublicationDto) {
-		await this.dataSource
+	async createOwnedPublication(userId: number, input: CreateOwnedPublicationDto): Promise<number> {
+		const result = await this.dataSource
 			.createQueryBuilder()
 			.insert()
 			.into(Publication)
@@ -101,6 +101,7 @@ export class PublicationService {
 				uniqueId: input.source === 'doi' && input.uniqueId ? input.uniqueId : randomUUID()
 			} as any)
 			.execute();
+		return result.identifiers[0]['id'] as number;
 	}
 
 	async assignOwnedPublication(userId: number, publicationId: number, dto: AssignPublicationDto, isStepUp: boolean) {

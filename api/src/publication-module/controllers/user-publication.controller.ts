@@ -62,11 +62,12 @@ export class UserPublicationController {
 	@HttpCode(201)
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Create my publication by id' })
-	@ApiCreatedResponse({ description: 'Publication created.' })
+	@ApiCreatedResponse({ description: 'Publication created.', type: Object })
 	async createMineById(@RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationByIdDto) {
 		console.log("controller add-by-id controller");
 		console.log(body);
-		await this.publicationService.createOwnedPublicationById(user.id, body);
+		const id = await this.publicationService.createOwnedPublicationById(user.id, body);
+		return { id };
 	}
 
 	@Post('/:id/assign')
