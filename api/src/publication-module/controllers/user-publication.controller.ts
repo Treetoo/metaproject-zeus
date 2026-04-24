@@ -41,8 +41,12 @@ export class UserPublicationController {
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Create my publication' })
 	@ApiCreatedResponse({ description: 'Publication created.' })
-	async createMine(@RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationDto) {
-		await this.publicationService.createOwnedPublication(user.id, body);
+	async createMine(
+		@RequestUser() user: UserDto,
+		@Body() body: CreateOwnedPublicationDto,
+		@IsStepUp() isStepUp: boolean
+	) {
+		await this.publicationService.createOwnedPublication(user.id, body, isStepUp);
 	}
 
 	@Put('/:id')
@@ -62,11 +66,13 @@ export class UserPublicationController {
 	@HttpCode(201)
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Create my publication by id' })
-	@ApiCreatedResponse({ description: 'Publication created.', type: Object })
-	async createMineById(@RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationByIdDto) {
-		console.log("controller add-by-id controller");
-		console.log(body);
-		const id = await this.publicationService.createOwnedPublicationById(user.id, body);
+	@ApiCreatedResponse({ description: 'Publication created.' })
+	async createMineById(
+		@RequestUser() user: UserDto,
+		@Body() body: CreateOwnedPublicationByIdDto,
+		@IsStepUp() isStepUp: boolean
+	) {
+		const id = await this.publicationService.createOwnedPublicationById(user.id, body, isStepUp);
 		return { id };
 	}
 

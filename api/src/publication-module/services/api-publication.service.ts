@@ -50,7 +50,8 @@ export class ApiPublicationService {
 
 
 	async getPublicationByIdAndType(id: string, type: PublicationIdentifierTypeDto): Promise<PublicationDto> {
-		if (type === 'doi') return await this.getPublicationByDoi(id)
+		console.log("type:" + type);
+		if (type === 'doi') return await this.getPublicationByDoi(id);
 		if (type === 'handle') console.log("in handle");
 		if (type === 'ark') console.log("in ark");
 		if (type === 'pubmed') return await this.getPublicationByPubmedId(id);
@@ -68,9 +69,11 @@ export class ApiPublicationService {
 	}
 
 	async getPublicationByPubmedId(pmid: string): Promise<PublicationDto> {
+		console.log("in get publicatiion by pmid");
 		const baseUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 		const endPoint = `esummary.fcgi?db=pubmed&id=${pmid}&retmode=json`;
 		const response = await this.fetchPubIdResolver(baseUrl, endPoint);
+		console.log(response.data.result)
 		return this.publicationMapper.mapPubmedApiResponseToDto(response.data.result, pmid);
 	}
 

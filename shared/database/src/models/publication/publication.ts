@@ -4,7 +4,7 @@ import { Project } from '../project/project';
 import { User } from '../user/user';
 import { ProjectPublication } from './project-publication';
 
-export type PublicationSource = 'manual' | 'doi';
+export type PublicationSource = 'manual' | 'doi' | 'pubmed' | 'isbn' | 'nma';
 
 @Entity()
 // Original code:
@@ -41,14 +41,24 @@ export class Publication {
 	@Index()
 	ownerId: number;
 
-	@Column({ type: 'enum', enum: ['pending', 'approved', 'rejected'], default: 'pending' })
+	@Column({
+		type: 'enum',
+		enum: ['pending', 'approved', 'rejected'],
+		default: 'pending'
+	})
 	status: 'pending' | 'approved' | 'rejected';
+
+	@Column({ nullable: true })
+	reviewerId: number | null;
+
+	@Column({ type: 'timestamp', nullable: true })
+	reviewedAt: Date | null;
 
 	@Column({ type: 'float', nullable: true })
 	weight: number | null;
 
-	@Column({ nullable: true })
-	reviewerId: number | null;
+	@Column({ length: 2048 })
+	url: string;
 
 	@ManyToOne(() => User)
 	owner: User;

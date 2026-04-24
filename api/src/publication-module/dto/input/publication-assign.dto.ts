@@ -8,11 +8,14 @@ export class CreateOwnedPublicationDto {
 	authors: string;
 	year: number;
 	journal: string;
+	url: string;
 	uniqueId?: string;
+	project: AssignPublicationDto;
 	source: Exclude<PublicationIdentifierTypeDto, 'unknown'> | 'manual';
 }
 
 export class CreateOwnedPublicationByIdDto {
 	uniqueId: string;
 	type: PublicationIdentifierTypeDto;
+	projectId: number;
 }

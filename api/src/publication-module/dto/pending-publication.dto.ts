@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class PendingPublicationDto {
 	@ApiProperty()
-	id: number;                    // ProjectPublication ID
+	id: number;
 
 	@ApiProperty()
 	publicationId: number;
@@ -22,14 +22,11 @@ export class PendingPublicationDto {
 	@ApiProperty()
 	uniqueId: string;
 
+	@ApiProperty()
+	url: string;
+
 	@ApiProperty({ enum: ['pending', 'approved', 'rejected'] })
 	status: string;
-
-	@ApiProperty()
-	projectId: number;
-
-	@ApiProperty()
-	projectName: string;
 
 	@ApiProperty()
 	requestedBy: number;

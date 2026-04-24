@@ -19,6 +19,12 @@ export class PublicationDto {
 	 */
 	journal: string;
 
+
+	/**
+	 * Url to publication the publication.
+	 */
+	url: string;
+
 	/**
 	 * Unique identifier of the publication. Either DOI, ISSN or ISBN.
 	 */

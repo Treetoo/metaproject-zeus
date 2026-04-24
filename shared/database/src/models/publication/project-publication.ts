@@ -10,22 +10,6 @@ export class ProjectPublication {
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column({
-		type: 'enum',
-		enum: ['pending', 'approved', 'rejected'],
-		default: 'pending'
-	})
-	status: 'pending' | 'approved' | 'rejected';
-
-	@Column({ type: 'int', nullable: true })
-	weight: number | null;
-
-	@Column({ nullable: true })
-	reviewerId: number | null;
-
-	@Column({ type: 'timestamp', nullable: true })
-	reviewedAt: Date | null;
-
 	@Column()
 	@Index()
 	projectId: number;
