@@ -17,5 +17,5 @@ export class CreateOwnedPublicationDto {
 export class CreateOwnedPublicationByIdDto {
 	uniqueId: string;
 	type: PublicationIdentifierTypeDto;
-	projectId: number;
+	project: AssignPublicationDto;
 }
