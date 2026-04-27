@@ -29,6 +29,10 @@ export class PublicationDetailDto {
 	 */
 	uniqueId: string;
 
+	/**
+	 * Link to the publication page.
+	 */
+	url: string;
 
 	/**
 	 * Publications status. Either pending, approved or rejected.

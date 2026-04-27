@@ -25,6 +25,7 @@ export class PublicationMapper {
 			journal: publication.journal,
 			uniqueId: publication.uniqueId,
 			status: publication.status,
+			url: publication.url,
 			year: publication.year,
 			isOwner: currentUserId ? publication['ownerId'] === currentUserId : false
 		};
