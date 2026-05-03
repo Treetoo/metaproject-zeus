@@ -30,6 +30,16 @@ export class PublicationDetailDto {
 	uniqueId: string;
 
 	/**
+	 * Link to the publication page.
+	 */
+	url: string;
+
+	/**
+	 * Publications status. Either pending, approved or rejected.
+	 */
+	status: string;
+
+	/**
 	 * True if the current user is the owner of this publication.
 	 */
 	isOwner: boolean;

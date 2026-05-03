@@ -1,1 +1,1 @@
-export type PublicationIdentifierTypeDto = "ark" | "pubmed" | "doi" | "handle" | "isbn" | "issn" | "orcid" | 'nma' | "unknown";
+export type PublicationIdentifierTypeDto = 'arxiv' | 'pubmed' | 'doi' | 'handle' | 'isbn' | 'orcid' | 'nma' | 'unknown';

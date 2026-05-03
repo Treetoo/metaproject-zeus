@@ -10,7 +10,11 @@ import { PublicationMapper } from '../mapper/publication.mapper';
 import { PaginationMapper } from '../../config-module/mappers/pagination.mapper';
 import { MinRoleCheck } from '../../permission-module/decorators/min-role.decorator';
 import { RoleEnum } from '../../permission-module/models/role.enum';
-import { CreateOwnedPublicationDto, AssignPublicationDto, CreateOwnedPublicationByIdDto } from '../dto/input/publication-assign.dto';
+import {
+	CreateOwnedPublicationDto,
+	AssignPublicationDto,
+	CreateOwnedPublicationByIdDto
+} from '../dto/input/publication-assign.dto';
 import { IsStepUp } from '../../auth-module/decorators/is-step-up.decorator';
 
 @Controller('/my/publications')
@@ -20,7 +24,7 @@ export class UserPublicationController {
 		private readonly publicationService: PublicationService,
 		private readonly paginationMapper: PaginationMapper,
 		private readonly publicationMapper: PublicationMapper
-	) { }
+	) {}
 
 	@Get()
 	@MinRoleCheck(RoleEnum.USER)
@@ -41,8 +45,12 @@ export class UserPublicationController {
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Create my publication' })
 	@ApiCreatedResponse({ description: 'Publication created.' })
-	async createMine(@RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationDto) {
-		await this.publicationService.createOwnedPublication(user.id, body);
+	async createMine(
+		@RequestUser() user: UserDto,
+		@Body() body: CreateOwnedPublicationDto,
+		@IsStepUp() isStepUp: boolean
+	) {
+		await this.publicationService.createOwnedPublication(user.id, body, isStepUp);
 	}
 
 	@Put('/:id')
@@ -50,11 +58,7 @@ export class UserPublicationController {
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Update my publication' })
 	@ApiCreatedResponse({ description: 'Publication updated.' })
-	async updateMine(
-		@Param('id') id: number,
-		@RequestUser() user: UserDto,
-		@Body() body: CreateOwnedPublicationDto
-	) {
+	async updateMine(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationDto) {
 		await this.publicationService.updateOwnedPublication(user.id, id, body);
 	}
 
@@ -63,10 +67,13 @@ export class UserPublicationController {
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({ summary: 'Create my publication by id' })
 	@ApiCreatedResponse({ description: 'Publication created.' })
-	async createMineById(@RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationByIdDto) {
-		console.log("controller add-by-id controller");
-		console.log(body);
-		await this.publicationService.createOwnedPublicationById(user.id, body);
+	async createMineById(
+		@RequestUser() user: UserDto,
+		@Body() body: CreateOwnedPublicationByIdDto,
+		@IsStepUp() isStepUp: boolean
+	) {
+		const id = await this.publicationService.createOwnedPublicationById(user.id, body, isStepUp);
+		return { id };
 	}
 
 	@Post('/:id/assign')

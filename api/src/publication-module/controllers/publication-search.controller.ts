@@ -8,7 +8,7 @@ import { ApiPublicationService } from '../services/api-publication.service';
 @Controller('/publication-search')
 @ApiTags('Publication')
 export class PublicationSearchController {
-	constructor(private readonly apiPublicationService: ApiPublicationService) { }
+	constructor(private readonly apiPublicationService: ApiPublicationService) {}
 
 	@Get('/doi/:doi')
 	@Public()
@@ -45,5 +45,4 @@ export class PublicationSearchController {
 	public async getPublicationByResearherId(@Param('id') id: string) {
 		return this.apiPublicationService.getPublicationsByResearcherId(id);
 	}
-
 }

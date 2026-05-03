@@ -11,6 +11,8 @@ import { ProjectPublicationController } from './controllers/project-publication.
 import { UserPublicationController } from './controllers/user-publication.controller';
 import { PublicationModel } from './models/publication.model';
 import { ProjectPublicationModel } from './models/project-publication.model';
+import { PublicationApprovalService } from './services/publication-approval.service';
+import { PublicationApprovalController } from './controllers/publication-approval.controller';
 
 @Module({
 	imports: [HttpModule, ProjectModule, ApiConfigModule],
@@ -20,13 +22,15 @@ import { ProjectPublicationModel } from './models/project-publication.model';
 		PublicationMapper,
 		PublicationService,
 		PublicationModel,
-		ProjectPublicationModel
+		ProjectPublicationModel,
+		PublicationApprovalService
 	],
 	controllers: [
 		PublicationSearchController,
 		PublicationController,
 		ProjectPublicationController,
-		UserPublicationController
+		UserPublicationController,
+		PublicationApprovalController
 	]
 })
 export class PublicationModule {}
