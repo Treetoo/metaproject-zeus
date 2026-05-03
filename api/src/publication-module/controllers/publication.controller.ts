@@ -21,7 +21,7 @@ export class PublicationController {
 		private readonly publicationService: PublicationService,
 		private readonly paginationMapper: PaginationMapper,
 		private readonly publicationMapper: PublicationMapper
-	) { }
+	) {}
 
 	@Get('/:projectId')
 	@MinRoleCheck(RoleEnum.USER)

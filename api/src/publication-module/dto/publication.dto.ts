@@ -19,7 +19,6 @@ export class PublicationDto {
 	 */
 	journal: string;
 
-
 	/**
 	 * Url to publication the publication.
 	 */
@@ -30,5 +29,5 @@ export class PublicationDto {
 	 */
 	uniqueId: string;
 
-	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'ark' | 'issn' | 'handle' | 'orcid' | 'pubmed';
+	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'arxiv' | 'issn' | 'handle' | 'orcid' | 'pubmed';
 }

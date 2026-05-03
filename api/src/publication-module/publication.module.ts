@@ -23,15 +23,14 @@ import { PublicationApprovalController } from './controllers/publication-approva
 		PublicationService,
 		PublicationModel,
 		ProjectPublicationModel,
-		PublicationApprovalService,
-
+		PublicationApprovalService
 	],
 	controllers: [
 		PublicationSearchController,
 		PublicationController,
 		ProjectPublicationController,
 		UserPublicationController,
-		PublicationApprovalController,
+		PublicationApprovalController
 	]
 })
 export class PublicationModule {}

@@ -12,9 +12,9 @@ export class PublicationMapper {
 			authors: data.message.author.map((author: any) => author.given + ' ' + author.family).join(', '),
 			year: data.message.created['date-parts'][0][0],
 			uniqueId: data.message.DOI,
-			url: data.message.URL ?? "https://doi.org/" + data.message.DOI,
+			url: data.message.URL ?? 'https://doi.org/' + data.message.DOI,
 			journal: data.message['container-title'][0],
-			source: 'doi',
+			source: 'doi'
 		};
 	}
 
@@ -24,9 +24,9 @@ export class PublicationMapper {
 			authors: data.attributes.creators.map((author: any) => author.name.replace(',', ' ')).join(', '),
 			year: data.attributes.publicationYear,
 			uniqueId: data.attributes.doi,
-			url: data.attributes.url ?? "https://doi.org/" + data.message.DOI,
+			url: data.attributes.url ?? 'https://doi.org/' + data.message.DOI,
 			journal: data.attributes.publisher,
-			source: 'doi',
+			source: 'doi'
 		};
 	}
 
@@ -38,20 +38,22 @@ export class PublicationMapper {
 			year: match ? parseInt(match[1]) : 1900,
 			uniqueId: id,
 			url: 'https://pubmed.ncbi.nlm.nih.gov/' + id,
-			journal: data.fulljournalname || data.source || "missing",
-			source: 'pubmed',
-		}
+			journal: data.fulljournalname || data.source || 'missing',
+			source: 'pubmed'
+		};
 	}
 
 	public mapNmaApiResponseToDto(data: any): PublicationDto {
 		return {
 			title: data.metadata.title,
-			authors: data.metadata.creators.map((author: any) => author.person_or_org.name.replace(',', ' ')).join(', '),
-			year: (new Date(Date.parse(data.metadata.publication_date)).getFullYear()),
+			authors: data.metadata.creators
+				.map((author: any) => author.person_or_org.name.replace(',', ' '))
+				.join(', '),
+			year: new Date(Date.parse(data.metadata.publication_date)).getFullYear(),
 			uniqueId: data.pids.oai.identifier,
-			url: data.metadata.persistent_url ?? "Missing",
-			journal: data.metadata.publisher ?? "Missing",
-			source: 'nma',
+			url: data.metadata.persistent_url ?? 'Missing',
+			journal: data.metadata.publisher ?? 'Missing',
+			source: 'nma'
 		};
 	}
 
@@ -59,12 +61,37 @@ export class PublicationMapper {
 		const volumeInfo = data.volumeInfo;
 		return {
 			title: volumeInfo.title,
-			authors: volumeInfo.authors?.join(', ') ?? "Unknown",
+			authors: volumeInfo.authors?.join(', ') ?? 'Unknown',
 			year: new Date(Date.parse(volumeInfo.publishedDate)).getFullYear() ?? 1900,
 			uniqueId: isbn,
-			url: data.canonicalVolumeLink ?? "Missing",
-			journal: volumeInfo.publisher ?? "Unknown",
-			source: 'isbn',
+			url: data.canonicalVolumeLink ?? 'Missing',
+			journal: volumeInfo.publisher ?? 'Unknown',
+			source: 'isbn'
+		};
+	}
+
+	public mapArxivApiResponseToDto(data: any, arxivId: string): PublicationDto {
+		const entry = data.feed.entry;
+		const entries = Array.isArray(entry) ? entry : [entry];
+		const paper = entries[0];
+
+		const title = paper.title?.replace(/\n+/g, ' ').trim() ?? 'Unknown';
+		const authorsRaw = paper.author;
+		const authorsArray = Array.isArray(authorsRaw) ? authorsRaw : authorsRaw ? [authorsRaw] : [];
+		const authors = authorsArray.map((a: any) => a.name ?? '').join(', ') || 'Unknown';
+		const published = paper.published ?? '';
+		const year = parseInt(published.substring(0, 4)) || 1900;
+		const url = paper.id ?? `https://arxiv.org/abs/${arxivId}`;
+		const journal_ref = paper['arxiv:journal_ref'] ?? 'missing';
+
+		return {
+			title,
+			authors,
+			year,
+			uniqueId: arxivId,
+			url,
+			journal: journal_ref,
+			source: 'arxiv'
 		};
 	}
 
@@ -73,7 +100,7 @@ export class PublicationMapper {
 			const workId = work.id;
 			const title = work.display_name || work.title || '';
 
-			let authors: string = "";
+			let authors: string = '';
 			if (work.authorships && Array.isArray(work.authorships)) {
 				authors = work.authorships
 					.map((authorship: any) => authorship.author?.display_name || authorship.raw_author_name)
@@ -82,8 +109,7 @@ export class PublicationMapper {
 			}
 
 			const year = work.publication_year;
-			const url = work.primary_location?.pdf_url ?? work.primary_location?.landing_page_url ?? "Missing";
-
+			const url = work.primary_location?.pdf_url ?? work.primary_location?.landing_page_url ?? 'Missing';
 
 			return {
 				title: title,
@@ -92,7 +118,7 @@ export class PublicationMapper {
 				uniqueId: workId,
 				url: url,
 				journal: work.primary_location.raw_source_name,
-				source: 'orcid',
+				source: 'orcid'
 			};
 		});
 

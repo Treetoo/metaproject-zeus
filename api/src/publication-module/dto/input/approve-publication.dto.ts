@@ -1,3 +1,3 @@
 export class ApprovePublicationDto {
-    weight: number;
+	weight: number;
 }

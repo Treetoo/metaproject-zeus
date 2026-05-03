@@ -2,8 +2,13 @@ import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Publication } from 'resource-manager-database';
+import { ApiException } from 'src/error-module/api-exception';
 import { PublicationInputDto } from '../dto/input/publication-input.dto';
-import { AssignPublicationDto, CreateOwnedPublicationDto, CreateOwnedPublicationByIdDto } from '../dto/input/publication-assign.dto';
+import {
+	AssignPublicationDto,
+	CreateOwnedPublicationDto,
+	CreateOwnedPublicationByIdDto
+} from '../dto/input/publication-assign.dto';
 import { ProjectPermissionService } from '../../project-module/services/project-permission.service';
 import { ProjectPermissionEnum } from '../../project-module/enums/project-permission.enum';
 import { ProjectNotFoundApiException } from '../../error-module/errors/projects/project-not-found.api-exception';
@@ -16,7 +21,6 @@ import { PublicationNotFoundApiException } from '../../error-module/errors/publi
 import { PublicationRequiresProjectContextApiException } from '../../error-module/errors/publications/publication-requires-project-context.api-exception';
 import { IdentifierDetectionService } from './identifier-detection.service';
 import { ApiPublicationService } from './api-publication.service';
-import { ApiException } from 'src/error-module/api-exception';
 
 @Injectable()
 export class PublicationService {
@@ -27,14 +31,17 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) { }
+	) {}
 
 	async getUserPublications(userId: number, pagination: Pagination, sorting: Sorting | null) {
 		return this.publicationModel.getUserPublications(userId, pagination, sorting);
 	}
 
-
-	async createOwnedPublicationById(userId: number, input: CreateOwnedPublicationByIdDto, isStepUp: boolean): Promise<number> {
+	async createOwnedPublicationById(
+		userId: number,
+		input: CreateOwnedPublicationByIdDto,
+		isStepUp: boolean
+	): Promise<number> {
 		if (input.type !== 'unknown') {
 			return this.createBySpecificType(userId, input, isStepUp);
 		}
@@ -44,12 +51,11 @@ export class PublicationService {
 		if (input.type !== 'unknown') {
 			return this.createBySpecificType(userId, input, isStepUp);
 		}
-		throw new ApiException(400, "Unable to detect type from identifier.", 400);
+		throw new ApiException(400, 'Unable to detect type from identifier.', 400);
 	}
 
 	private async createBySpecificType(userId: number, input: CreateOwnedPublicationByIdDto, isStepUp: boolean) {
 		if (input.type === 'unknown') {
-			console.error("Invalid type")
 			throw new PublicationNotFoundApiException();
 		}
 		const externalData = await this.apiPublicationService.getPublicationByIdAndType(input.uniqueId, input.type);
@@ -66,9 +72,9 @@ export class PublicationService {
 				project: { projectId: input.project.projectId },
 				uniqueId: input.uniqueId
 			},
-			isStepUp);
+			isStepUp
+		);
 	}
-
 
 	async updateOwnedPublication(userId: number, publicationId: number, input: CreateOwnedPublicationDto) {
 		const publication = await this.publicationModel.findOwnedByUser(publicationId, userId);
@@ -84,7 +90,7 @@ export class PublicationService {
 				author: input.authors,
 				year: input.year,
 				journal: input.journal,
-				url: input.url,
+				url: input.url
 			})
 			.where('id = :id AND ownerId = :ownerId', { id: publicationId, ownerId: userId })
 			.execute();
@@ -106,7 +112,7 @@ export class PublicationService {
 						journal: input.journal,
 						source: input.source,
 						url: input.url,
-						uniqueId: input.source !== 'manual' ? input.source + ":" + input.uniqueId : randomUUID(),
+						uniqueId: input.source !== 'manual' ? input.source + ':' + input.uniqueId : randomUUID(),
 						projectId: null as any
 					} as any)
 					.execute();
@@ -121,14 +127,19 @@ export class PublicationService {
 					isStepUp
 				);
 
-				await this.projectPublicationModel.linkPublication(input.project.projectId, publicationId, userId, manager);
+				await this.projectPublicationModel.linkPublication(
+					input.project.projectId,
+					publicationId,
+					userId,
+					manager
+				);
 				await this.resetLegacyProjectColumn(publicationId, manager);
 			});
 
 			return publicationId;
 		} catch (error) {
 			if (error.code === '23505') {
-				throw new ApiException(409, "Publication is already present", 409);
+				throw new ApiException(409, 'Publication is already present', 409);
 			}
 			throw error;
 		}
@@ -174,8 +185,7 @@ export class PublicationService {
 			sorting
 		);
 		const publications = links.map((link) => {
-			let r = link['publication'];
-			return r;
+			return link['publication'];
 		});
 		return [publications, count] as [Publication[], number];
 	}

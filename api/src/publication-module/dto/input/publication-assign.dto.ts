@@ -1,4 +1,5 @@
-import { PublicationIdentifierTypeDto } from "../identifier-type.dto"
+import { PublicationIdentifierTypeDto } from '../identifier-type.dto';
+
 export class AssignPublicationDto {
 	projectId: number;
 }

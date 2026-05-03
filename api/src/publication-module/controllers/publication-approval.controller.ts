@@ -29,7 +29,7 @@ export class PublicationApprovalController {
 	) {
 		const [publications, count] = await this.approvalService.getPendingRequests(pagination, sorting);
 
-		const items = publications.map(publication => ({
+		const items = publications.map((publication) => ({
 			id: publication.id,
 			publicationId: publication.id,
 			title: publication.title,
@@ -55,11 +55,7 @@ export class PublicationApprovalController {
 	@ApiCreatedResponse({
 		description: 'Publications approved.'
 	})
-	async approve(
-		@Param('id') id: number,
-		@RequestUser() user: UserDto,
-		@Body() body: ApprovePublicationDto
-	) {
+	async approve(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: ApprovePublicationDto) {
 		return this.approvalService.approvePublication(id, user.id, body.weight);
 	}
 
@@ -72,10 +68,7 @@ export class PublicationApprovalController {
 	@ApiCreatedResponse({
 		description: 'Publications rejected.'
 	})
-	async reject(
-		@Param('id') id: number,
-		@RequestUser() user: UserDto
-	) {
+	async reject(@Param('id') id: number, @RequestUser() user: UserDto) {
 		return this.approvalService.rejectPublication(id, user.id);
 	}
 }

@@ -17,7 +17,7 @@ import { RoleEnum } from '../../permission-module/models/role.enum';
 
 @Injectable()
 export class ProjectPermissionService {
-	public constructor(private readonly dataSource: DataSource) { }
+	public constructor(private readonly dataSource: DataSource) {}
 
 	async getUserPermissions(projectId: number, userId: number, isStepUp: boolean) {
 		const manager = this.dataSource.manager;

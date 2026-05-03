@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Publication } from 'resource-manager-database';
+import { ApiException } from '../../error-module/api-exception';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 
 @Injectable()
 export class PublicationApprovalService {
-	constructor(
-		private dataSource: DataSource,
-	) { }
+	constructor(private dataSource: DataSource) {}
 
 	async getPendingRequests(pagination, sorting) {
-		const builder = this.dataSource.getRepository(Publication)
+		const builder = this.dataSource
+			.getRepository(Publication)
 			.createQueryBuilder('p')
 			.where('p.status = :status', { status: 'pending' });
 
@@ -19,12 +19,12 @@ export class PublicationApprovalService {
 		const order = direction === 'DESC' ? 'DESC' : 'ASC';
 
 		const sortFieldMap: Record<string, string> = {
-			'id': 'p.id',
-			'title': 'p.title',
-			'authors': 'p.author',
-			'journal': 'p.journal',
-			'year': 'p.year',
-			'createdAt': 'p.time.createdAt',
+			id: 'p.id',
+			title: 'p.title',
+			authors: 'p.author',
+			journal: 'p.journal',
+			year: 'p.year',
+			createdAt: 'p.time.createdAt'
 		};
 
 		const sortField = sortFieldMap[columnAccessor] || sortFieldMap['id'];
@@ -38,6 +38,8 @@ export class PublicationApprovalService {
 	}
 
 	async approvePublication(publicationId: number, reviewerId: number, weight: number) {
+		if (weight < 1 || weight > 3) throw new ApiException(400, 'Invalid weight', 400);
+
 		return this.dataSource.transaction(async (manager) => {
 			await manager.update(Publication, publicationId, {
 				status: 'approved',
