@@ -64,7 +64,7 @@ export class PublicationMapper {
 			authors: volumeInfo.authors?.join(', ') ?? 'Unknown',
 			year: new Date(Date.parse(volumeInfo.publishedDate)).getFullYear() ?? 1900,
 			uniqueId: isbn,
-			url: data.canonicalVolumeLink ?? 'Missing',
+			url: volumeInfo.canonicalVolumeLink ?? 'Missing',
 			journal: volumeInfo.publisher ?? 'Unknown',
 			source: 'isbn'
 		};
