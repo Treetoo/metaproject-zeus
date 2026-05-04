@@ -32,6 +32,9 @@ export class User {
 	name: string;
 
 	@Column({ nullable: true })
+	orcid: string;
+
+	@Column({ nullable: true })
 	locale: string;
 
 	@Column()
