@@ -12,7 +12,7 @@ import { PerunDataService } from '../services/perun-data.service';
 export class PerunWebhookController {
 	constructor(private readonly perunDataService: PerunDataService) {}
 
-	@Post('data')
+	@Post('orcid')
 	@HttpCode(200)
 	@ApiOperation({
 		summary: 'Receive Perun data with ORCID',
