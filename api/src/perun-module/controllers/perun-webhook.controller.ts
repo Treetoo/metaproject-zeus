@@ -17,13 +17,13 @@ export class PerunWebhookController {
 	@ApiOperation({
 		summary: 'Receive Perun data with ORCID',
 		description:
-			'Endpoint to receive data from Perun containing ORCID information. This endpoint is designed to be called by the generic_sender.py script from Perun. Requires Bearer token authentication configured via PERUN_WEBHOOK_SECRET environment variable.'
+			'Endpoint to receive data from Perun containing ORCID information. This endpoint is designed to be called by the generic_sender.py script from Perun. Requires Basic Auth authentication configured via PERUN_WEBHOOK_SECRET environment variable.'
 	})
 	@ApiHeader({
 		name: 'Authorization',
 		required: true,
-		description: 'Bearer token for Perun webhook authentication',
-		schema: { type: 'string', example: 'Bearer <your-perun-webhook-secret>' }
+		description: 'Basic Auth credentials for Perun webhook authentication',
+		schema: { type: 'string', example: 'Basic <base64-encoded-credentials>' }
 	})
 	async receivePerunData(@Body() data: PerunDataDto) {
 		return this.perunDataService.processPerunData(data);
