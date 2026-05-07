@@ -31,7 +31,7 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) {}
+	) { }
 
 	async getUserPublications(userId: number, pagination: Pagination, sorting: Sorting | null) {
 		return this.publicationModel.getUserPublications(userId, pagination, sorting);
@@ -46,7 +46,7 @@ export class PublicationService {
 			return this.createBySpecificType(userId, input, isStepUp);
 		}
 
-		input.type = IdentifierDetectionService.detect(input.uniqueId);
+		input.type = IdentifierDetectionService.detectPublicationIdType(input.uniqueId);
 
 		if (input.type !== 'unknown') {
 			return this.createBySpecificType(userId, input, isStepUp);
