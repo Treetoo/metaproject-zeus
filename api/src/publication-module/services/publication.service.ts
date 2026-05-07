@@ -94,7 +94,8 @@ export class PublicationService {
 				author: input.authors,
 				year: input.year,
 				journal: input.journal,
-				url: input.url
+				url: input.url,
+				status: 'pending'
 			})
 			.where('id = :id AND ownerId = :ownerId', { id: publicationId, ownerId: userId })
 			.execute();

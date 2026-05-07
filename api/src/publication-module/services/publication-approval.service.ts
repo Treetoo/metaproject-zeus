@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { Publication } from 'resource-manager-database';
 import { ApiException } from '../../error-module/api-exception';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
+import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 
 @Injectable()
 export class PublicationApprovalService {
@@ -37,20 +38,22 @@ export class PublicationApprovalService {
 		return builder.getManyAndCount();
 	}
 
-	async approvePublication(publicationId: number, reviewerId: number, weight: number) {
-		if (weight < 1 || weight > 3) throw new ApiException(400, 'Invalid weight', 400);
+	async approvePublication(publicationId: number, reviewerId: number, approvalStatus: ApprovePublicationDto) {
+		if (approvalStatus.weight === undefined || approvalStatus.weight < 1 || approvalStatus.weight > 3)
+			throw new ApiException(400, 'Invalid or missing weight', 400);
 
 		return this.dataSource.transaction(async (manager) => {
 			await manager.update(Publication, publicationId, {
 				status: 'approved',
-				weight: weight,
+				weight: approvalStatus.weight,
 				reviewerId: reviewerId,
-				reviewedAt: new Date()
+				reviewedAt: new Date(),
+				reviewerNote: approvalStatus.reviewerNote ?? null
 			});
 		});
 	}
 
-	async rejectPublication(publicationId: number, reviewerId: number) {
+	async rejectPublication(publicationId: number, reviewerId: number, approvalStatus: ApprovePublicationDto) {
 		return this.dataSource.transaction(async (manager) => {
 			const publication = await manager.findOne(Publication, { where: { id: publicationId } });
 
@@ -60,6 +63,7 @@ export class PublicationApprovalService {
 
 			await manager.update(Publication, publicationId, {
 				status: 'rejected',
+				reviewerNote: approvalStatus.reviewerNote ?? null,
 				reviewerId: reviewerId,
 				reviewedAt: new Date()
 			});

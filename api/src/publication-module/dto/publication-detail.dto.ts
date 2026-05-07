@@ -43,4 +43,9 @@ export class PublicationDetailDto {
 	 * True if the current user is the owner of this publication.
 	 */
 	isOwner: boolean;
+
+	/**
+	 * Comment from the reviewer.
+	 */
+	reviewerNote?: string;
 }

@@ -56,7 +56,7 @@ export class PublicationApprovalController {
 		description: 'Publications approved.'
 	})
 	async approve(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: ApprovePublicationDto) {
-		return this.approvalService.approvePublication(id, user.id, body.weight);
+		return this.approvalService.approvePublication(id, user.id, body);
 	}
 
 	@Post(':id/reject')
@@ -68,7 +68,7 @@ export class PublicationApprovalController {
 	@ApiCreatedResponse({
 		description: 'Publications rejected.'
 	})
-	async reject(@Param('id') id: number, @RequestUser() user: UserDto) {
-		return this.approvalService.rejectPublication(id, user.id);
+	async reject(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: ApprovePublicationDto) {
+		return this.approvalService.rejectPublication(id, user.id, body);
 	}
 }

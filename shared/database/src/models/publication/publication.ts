@@ -57,6 +57,9 @@ export class Publication {
 	@Column({ type: 'float', nullable: true })
 	weight: number | null;
 
+	@Column({ nullable: true, length: 8192 })
+	reviewerNote: string | null;
+
 	@Column({ length: 2048 })
 	url: string;
 
