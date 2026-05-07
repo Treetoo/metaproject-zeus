@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
+import { PublicationIdentifierTypeDto, ResearcherIdentifierTypeDto } from '../dto/identifier-type.dto';
 
 @Injectable()
 export class IdentifierDetectionService {
@@ -8,16 +8,14 @@ export class IdentifierDetectionService {
 		{ type: 'nma', pattern: /^https:\/\/nma\.eosc\.cz\/.+/i },
 		{ type: 'pubmed', pattern: /^\d+$/ },
 		{ type: 'isbn', pattern: /^(?:\d{9}[\dX]|\d{13})$/i },
-		{ type: 'arxiv', pattern: /^(\d{4}\.\d{4,5}(v\d+)?|[a-z\-]+(\.[A-Z]{2})?\/\d{7}(v\d+)?)$/i }
-		//TODO Alex
+		{ type: 'arxiv', pattern: /^(\d{4}\.\d{4,5}(v\d+)?|[a-z\-]+(\.[A-Z]{2})?\/\d{7}(v\d+)?)$/i },
+		{ type: 'openalex', pattern: /^w\d+$/i }
 	];
 
-	private static readonly researcherPatterns: Array<{ type: PublicationIdentifierTypeDto; pattern: RegExp }> = [
+	private static readonly researcherPatterns: Array<{ type: ResearcherIdentifierTypeDto; pattern: RegExp }> = [
 		{ type: 'orcid', pattern: /^(\d{4}-){3}\d{3}[\dX]$/i },
-		//TODO Alex
+		{ type: 'openalex', pattern: /^a\d+$/i }
 	];
-
-	;
 
 	static detectPublicationIdType(id: string): PublicationIdentifierTypeDto {
 		const trimmed = id.trim();
@@ -37,7 +35,6 @@ export class IdentifierDetectionService {
 	static detectResearcherIdType(id: string): PublicationIdentifierTypeDto {
 		const trimmed = id.trim();
 		const matches = this.researcherPatterns.filter(({ pattern }) => pattern.test(trimmed)).map(({ type }) => type);
-		console.log("trying to match")
 
 		if (matches.length === 0) {
 			return 'unknown';

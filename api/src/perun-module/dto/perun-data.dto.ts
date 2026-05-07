@@ -1,21 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type, Expose } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { IsString, IsOptional, IsObject, ValidateNested, IsArray, IsNotEmpty } from 'class-validator';
 
-export class PerunUserDto {
-	@ApiProperty({ description: 'Perun internal user ID' })
-	@IsString()
-	@IsNotEmpty()
-	userId: string;
-
-	@ApiProperty({ description: 'Perun user name' })
-	@IsString()
-	@IsNotEmpty()
-	userName: string;
-
+export class PerunUserAttributesDto {
 	@ApiProperty({
-		description: 'All other raw attributes returned by Perun',
-		required: false,
+		description: 'All Perun user attributes',
+		required: true,
 		type: Object
 	})
 	@IsOptional()
@@ -23,25 +13,15 @@ export class PerunUserDto {
 	attributes?: Record<string, any>;
 }
 
-export class FacilityAttributesDto {
+export class PerunUserDto {
 	@ApiProperty({
-		description: 'Host name attribute',
-		required: false
+		description: 'Perun user attributes',
+		required: true,
+		type: PerunUserAttributesDto
 	})
-	@IsOptional()
-	@IsString()
-	@Expose()
-	'urn:perun:facility:attribute-def:def:hostName'?: string;
-
-	@ApiProperty({
-		description: 'Description attribute - can be multilingual',
-		required: false,
-		type: Object
-	})
-	@IsOptional()
-	@IsObject()
-	@Expose()
-	'urn:perun:facility:attribute-def:def:desc'?: Record<string, string>;
+	@ValidateNested()
+	@Type(() => PerunUserAttributesDto)
+	attributes: PerunUserAttributesDto;
 }
 
 export class FacilityDto {
@@ -66,12 +46,12 @@ export class FacilityDto {
 	@ApiProperty({
 		description: 'All custom facility attributes',
 		required: false,
-		type: FacilityAttributesDto
+		type: Object
 	})
 	@IsOptional()
 	@ValidateNested()
-	@Type(() => FacilityAttributesDto)
-	attributes?: FacilityAttributesDto;
+	@Type(() => Object)
+	attributes?: object;
 }
 
 export class MetadataDto {
@@ -93,11 +73,9 @@ export class PerunDataDto {
 	metadata: MetadataDto;
 
 	@ApiProperty({
-		description: 'List of users returned by the generator',
-		type: [PerunUserDto]
+		description: 'Map of users returned by the generator, keyed by user ID',
+		type: PerunUserDto
 	})
-	@IsArray()
-	@ValidateNested({ each: true })
-	@Type(() => PerunUserDto)
-	users: PerunUserDto[];
+	@IsObject()
+	users: Record<string, PerunUserDto>;
 }

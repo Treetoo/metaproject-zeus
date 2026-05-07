@@ -1,3 +1,5 @@
+import { type PublicationIdentifierTypeDto } from './identifier-type.dto';
+
 export class PublicationDto {
 	/**
 	 * Title of the publication.
@@ -29,5 +31,5 @@ export class PublicationDto {
 	 */
 	uniqueId: string;
 
-	source: 'doi' | 'manual' | 'isbn' | 'nma' | 'arxiv' | 'issn' | 'handle' | 'orcid' | 'pubmed';
+	source: PublicationIdentifierTypeDto;
 }

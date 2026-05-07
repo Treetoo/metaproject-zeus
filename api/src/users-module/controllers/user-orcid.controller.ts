@@ -13,23 +13,23 @@ export class UserOrcidController {
 	@Get('orcid')
 	@MinRoleCheck(RoleEnum.USER)
 	@ApiOperation({
-		summary: 'Get current user\'s ORCID.',
-		description: 'Returns the ORCID of the authenticated user.'
+		summary: "Get current user's ORCIDs.",
+		description: 'Returns all ORCIDs associated with the authenticated user.'
 	})
 	@ApiOkResponse({
-		description: 'User ORCID.',
+		description: 'User ORCIDs.',
 		schema: {
 			type: 'object',
 			properties: {
 				orcid: {
-					type: 'string',
-					example: '0000-0002-3237-9305'
+					type: 'array',
+					items: { type: 'string' },
+					example: ['0000-0002-3237-9305']
 				}
 			}
 		}
 	})
-	public async getUserOrcid(
-		@RequestUser() user: UserDto) {
-		return { orcid: user.orcid || null };
+	public async getUserOrcid(@RequestUser() user: UserDto) {
+		return { orcid: user.orcid || [] };
 	}
 }

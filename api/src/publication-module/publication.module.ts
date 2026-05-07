@@ -25,7 +25,7 @@ import { ResearcherService } from './services/researcher.service';
 		PublicationModel,
 		ProjectPublicationModel,
 		PublicationApprovalService,
-		ResearcherService,
+		ResearcherService
 	],
 	controllers: [
 		PublicationSearchController,
@@ -35,4 +35,4 @@ import { ResearcherService } from './services/researcher.service';
 		PublicationApprovalController
 	]
 })
-export class PublicationModule { }
+export class PublicationModule {}

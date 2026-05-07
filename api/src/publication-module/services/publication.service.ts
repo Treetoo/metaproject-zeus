@@ -31,7 +31,7 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) { }
+	) {}
 
 	async getUserPublications(userId: number, pagination: Pagination, sorting: Sorting | null) {
 		return this.publicationModel.getUserPublications(userId, pagination, sorting);

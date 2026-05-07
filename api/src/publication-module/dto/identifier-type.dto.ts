@@ -1,1 +1,11 @@
-export type PublicationIdentifierTypeDto = 'arxiv' | 'pubmed' | 'doi' | 'handle' | 'isbn' | 'orcid' | 'nma' | 'unknown';
+export type PublicationIdentifierTypeDto =
+	| 'arxiv'
+	| 'pubmed'
+	| 'doi'
+	| 'isbn'
+	| 'orcid'
+	| 'nma'
+	| 'unknown'
+	| 'openalex'
+	| 'manual';
+export type ResearcherIdentifierTypeDto = 'orcid' | 'openalex' | 'unknown';

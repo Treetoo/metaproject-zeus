@@ -9,8 +9,10 @@ import { ResearcherService } from '../services/researcher.service';
 @Controller('/publication-search')
 @ApiTags('Publication')
 export class PublicationSearchController {
-	constructor(private readonly apiPublicationService: ApiPublicationService,
-		private readonly researcherService: ResearcherService) { }
+	constructor(
+		private readonly apiPublicationService: ApiPublicationService,
+		private readonly researcherService: ResearcherService
+	) {}
 
 	@Get('/doi/:doi')
 	@Public()
