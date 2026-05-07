@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Brackets, DataSource } from 'typeorm';
 import { Publication } from 'resource-manager-database';
 import { ApiException } from '../../error-module/api-exception';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
@@ -9,11 +9,27 @@ import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 export class PublicationApprovalService {
 	constructor(private dataSource: DataSource) {}
 
-	async getPendingRequests(pagination, sorting) {
-		const builder = this.dataSource
-			.getRepository(Publication)
-			.createQueryBuilder('p')
-			.where('p.status = :status', { status: 'pending' });
+	async getPublicationRequests(pagination, sorting, status?: string, search?: string) {
+		const builder = this.dataSource.getRepository(Publication).createQueryBuilder('p');
+
+		if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+			builder.where('p.status = :status', { status });
+		} else {
+			builder.where('1=1');
+		}
+
+		if (search && search.trim().length > 0) {
+			const searchTerm = `%${search.toLowerCase()}%`;
+			builder.andWhere(
+				new Brackets((qb) =>
+					qb
+						.orWhere('LOWER(p.title) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.author) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.journal) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.uniqueId) LIKE :searchTerm', { searchTerm })
+				)
+			);
+		}
 
 		const columnAccessor = sorting?.columnAccessor || 'id';
 		const direction = sorting?.direction || 'ASC';

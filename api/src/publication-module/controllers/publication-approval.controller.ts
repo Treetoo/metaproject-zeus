@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
+import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
+import { ApiQuery, ApiOkResponse, ApiOperation, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
 import { RequestUser } from '../../auth-module/decorators/user.decorator';
 import { UserDto } from '../../users-module/dtos/user.dto';
 import { MinRoleCheck } from '../../permission-module/decorators/min-role.decorator';
@@ -21,13 +21,26 @@ export class PublicationApprovalController {
 
 	@Get()
 	@MinRoleCheck(RoleEnum.DIRECTOR)
-	@ApiOkResponse({ description: 'Pending publications', type: PublicationListDto })
-	async listPending(
-		@RequestUser() user: UserDto,
+	@ApiQuery({
+		name: 'status',
+		required: false,
+		enum: ['pending', 'approved', 'rejected'],
+		description: 'Filter by status'
+	})
+	@ApiQuery({ name: 'search', required: false, description: 'Search by title, authors, journal, or unique ID' })
+	@ApiOkResponse({ description: 'Publication requests', type: PublicationListDto })
+	async listPublicationRequests(
 		@GetPagination() pagination: Pagination,
-		@GetSorting() sorting: Sorting
+		@GetSorting() sorting: Sorting,
+		@Query('status') status?: string,
+		@Query('search') search?: string
 	) {
-		const [publications, count] = await this.approvalService.getPendingRequests(pagination, sorting);
+		const [publications, count] = await this.approvalService.getPublicationRequests(
+			pagination,
+			sorting,
+			status,
+			search
+		);
 
 		const items = publications.map((publication) => ({
 			id: publication.id,
