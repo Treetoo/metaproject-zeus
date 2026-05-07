@@ -82,6 +82,10 @@ export class PublicationService {
 			throw new PublicationNotFoundApiException();
 		}
 
+		if (publication.status === 'approved') {
+			throw new ApiException(403, 'Cannot update an approved publication.', 403);
+		}
+
 		await this.dataSource
 			.createQueryBuilder()
 			.update(Publication)

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Put, Body, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiHeader } from '@nestjs/swagger';
 import { Public } from '../../auth-module/decorators/public.decorator';
 import { PerunWebhookGuard } from '../guards/perun-webhook.guard';
@@ -12,7 +12,7 @@ import { PerunDataService } from '../services/perun-data.service';
 export class PerunWebhookController {
 	constructor(private readonly perunDataService: PerunDataService) {}
 
-	@Post('orcid')
+	@Put('orcid')
 	@HttpCode(200)
 	@ApiOperation({
 		summary: 'Receive Perun data with ORCID',
