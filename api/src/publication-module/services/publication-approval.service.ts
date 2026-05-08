@@ -1,18 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Brackets, DataSource } from 'typeorm';
 import { Publication } from 'resource-manager-database';
 import { ApiException } from '../../error-module/api-exception';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
+import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 
 @Injectable()
 export class PublicationApprovalService {
 	constructor(private dataSource: DataSource) {}
 
-	async getPendingRequests(pagination, sorting) {
-		const builder = this.dataSource
-			.getRepository(Publication)
-			.createQueryBuilder('p')
-			.where('p.status = :status', { status: 'pending' });
+	async getPublicationRequests(pagination, sorting, status?: string, search?: string) {
+		const builder = this.dataSource.getRepository(Publication).createQueryBuilder('p');
+
+		if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+			builder.where('p.status = :status', { status });
+		} else {
+			builder.where('1=1');
+		}
+
+		if (search && search.trim().length > 0) {
+			const searchTerm = `%${search.toLowerCase()}%`;
+			builder.andWhere(
+				new Brackets((qb) =>
+					qb
+						.orWhere('LOWER(p.title) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.author) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.journal) LIKE :searchTerm', { searchTerm })
+						.orWhere('LOWER(p.uniqueId) LIKE :searchTerm', { searchTerm })
+				)
+			);
+		}
 
 		const columnAccessor = sorting?.columnAccessor || 'id';
 		const direction = sorting?.direction || 'ASC';
@@ -37,20 +54,22 @@ export class PublicationApprovalService {
 		return builder.getManyAndCount();
 	}
 
-	async approvePublication(publicationId: number, reviewerId: number, weight: number) {
-		if (weight < 1 || weight > 3) throw new ApiException(400, 'Invalid weight', 400);
+	async approvePublication(publicationId: number, reviewerId: number, approvalStatus: ApprovePublicationDto) {
+		if (approvalStatus.weight === undefined || approvalStatus.weight < 1 || approvalStatus.weight > 3)
+			throw new ApiException(400, 'Invalid or missing weight', 400);
 
 		return this.dataSource.transaction(async (manager) => {
 			await manager.update(Publication, publicationId, {
 				status: 'approved',
-				weight: weight,
+				weight: approvalStatus.weight,
 				reviewerId: reviewerId,
-				reviewedAt: new Date()
+				reviewedAt: new Date(),
+				reviewerNote: approvalStatus.reviewerNote ?? null
 			});
 		});
 	}
 
-	async rejectPublication(publicationId: number, reviewerId: number) {
+	async rejectPublication(publicationId: number, reviewerId: number, approvalStatus: ApprovePublicationDto) {
 		return this.dataSource.transaction(async (manager) => {
 			const publication = await manager.findOne(Publication, { where: { id: publicationId } });
 
@@ -60,6 +79,7 @@ export class PublicationApprovalService {
 
 			await manager.update(Publication, publicationId, {
 				status: 'rejected',
+				reviewerNote: approvalStatus.reviewerNote ?? null,
 				reviewerId: reviewerId,
 				reviewedAt: new Date()
 			});

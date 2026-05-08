@@ -141,6 +141,7 @@ export class PublicationMapper {
 			status: publication.status,
 			year: publication.year,
 			url: publication.url,
+			reviewerNote: publication.reviewerNote ?? '',
 			isOwner: currentUserId ? publication['ownerId'] === currentUserId : false
 		};
 	}

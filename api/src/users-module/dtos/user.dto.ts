@@ -39,6 +39,13 @@ export class UserDto {
 	locale: string;
 
 	/**
+	 * User's orcids
+	 *
+	 * @example ['0000-0002-3237-9305']
+	 */
+	orcid: string[];
+
+	/**
 	 * User's full name
 	 *
 	 * @example "John Doe"

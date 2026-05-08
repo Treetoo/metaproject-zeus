@@ -15,6 +15,8 @@ import { FailedStageService } from './services/failed-stage.service';
 import { FailedStageMapper } from './mappers/failed-stage.mapper';
 import { PerunInvitationsConsumer } from './consumers/perun-invitations.consumer';
 import { PerunInvitationsService } from './services/managers/perun-invitations.service';
+import { PerunWebhookController } from './controllers/perun-webhook.controller';
+import { PerunDataService } from './services/perun-data.service';
 
 @Module({
 	imports: [
@@ -40,8 +42,9 @@ import { PerunInvitationsService } from './services/managers/perun-invitations.s
 		PerunRegistrarService,
 		PerunInvitationsService,
 		FailedStageService,
-		FailedStageMapper
+		FailedStageMapper,
+		PerunDataService
 	],
-	controllers: [PerunFailedGroupsController]
+	controllers: [PerunFailedGroupsController, PerunWebhookController]
 })
 export class PerunModule {}

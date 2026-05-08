@@ -1,6 +1,7 @@
 import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { TimeEntity } from '../time-entity';
 import { Role } from './role';
+import { Orcid } from './orcid';
 import { Project } from '../project/project';
 import { ProjectUser } from '../project/project-user';
 
@@ -42,6 +43,9 @@ export class User {
 
 	@OneToMany(() => Project, project => project.pi)
 	assignedProjects: Project[];
+
+	@OneToMany(() => Orcid, orcid => orcid.user)
+	orcids: Orcid[];
 
 	@Column(() => TimeEntity)
 	time: TimeEntity;

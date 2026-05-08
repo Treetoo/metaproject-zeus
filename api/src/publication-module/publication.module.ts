@@ -13,6 +13,7 @@ import { PublicationModel } from './models/publication.model';
 import { ProjectPublicationModel } from './models/project-publication.model';
 import { PublicationApprovalService } from './services/publication-approval.service';
 import { PublicationApprovalController } from './controllers/publication-approval.controller';
+import { ResearcherService } from './services/researcher.service';
 
 @Module({
 	imports: [HttpModule, ProjectModule, ApiConfigModule],
@@ -23,7 +24,8 @@ import { PublicationApprovalController } from './controllers/publication-approva
 		PublicationService,
 		PublicationModel,
 		ProjectPublicationModel,
-		PublicationApprovalService
+		PublicationApprovalService,
+		ResearcherService
 	],
 	controllers: [
 		PublicationSearchController,

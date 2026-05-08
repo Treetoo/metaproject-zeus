@@ -12,6 +12,7 @@ export class UserMapper {
 			source: user.source,
 			externalId: user.externalId,
 			username: user.username,
+			orcid: user?.orcids?.map((orcid) => orcid?.orcid || ''),
 			name: user.name,
 			role: forceUserRole ? 'user' : user?.role?.codeName
 		};

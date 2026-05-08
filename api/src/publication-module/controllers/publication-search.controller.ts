@@ -4,11 +4,15 @@ import { PublicationDto } from '../dto/publication.dto';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 import { Public } from '../../auth-module/decorators/public.decorator';
 import { ApiPublicationService } from '../services/api-publication.service';
+import { ResearcherService } from '../services/researcher.service';
 
 @Controller('/publication-search')
 @ApiTags('Publication')
 export class PublicationSearchController {
-	constructor(private readonly apiPublicationService: ApiPublicationService) {}
+	constructor(
+		private readonly apiPublicationService: ApiPublicationService,
+		private readonly researcherService: ResearcherService
+	) {}
 
 	@Get('/doi/:doi')
 	@Public()
@@ -28,7 +32,7 @@ export class PublicationSearchController {
 		return this.apiPublicationService.getPublicationByDoi(doi);
 	}
 
-	@Get('/researcher-id/:id')
+	@Get('/researcher-id/:id/:type')
 	@Public()
 	@ApiOperation({
 		summary: 'Get publications by researcher ID.',
@@ -42,7 +46,7 @@ export class PublicationSearchController {
 		description: 'Researcher ID not found.',
 		type: PublicationNotFoundApiException
 	})
-	public async getPublicationByResearherId(@Param('id') id: string) {
-		return this.apiPublicationService.getPublicationsByResearcherId(id);
+	public async getPublicationByResearherId(@Param('id') id: string, @Param('type') type: string) {
+		return await this.researcherService.searchByPublicationById(id, type);
 	}
 }

@@ -1,6 +1,7 @@
 import { TypeormConfigService } from './config/typeorm.config';
 import { Role } from './models/user/role';
 import { User } from './models/user/user';
+import { Orcid } from './models/user/orcid';
 import { Project } from './models/project/project';
 import { ProjectStatus } from './models/project/project';
 import { ProjectApproval } from './models/project/project-approval';
@@ -27,7 +28,7 @@ import { ResourceUsageSummary, ResourceUsageSummaryMetrics, OpenstackInstanceMet
 
 export { TypeormConfigService };
 export { AttributeType };
-export { Role, User, Project, ProjectStatus, ProjectApproval, ApprovalStatus, ProjectUser };
+export { Role, User, Orcid, Project, ProjectStatus, ProjectApproval, ApprovalStatus, ProjectUser };
 export { ProjectUserRole, ProjectUserStatus }
 export { Resource, ResourceType, ResourceAttributeType, ResourceToAttributeType };
 export { ProjectArchival };

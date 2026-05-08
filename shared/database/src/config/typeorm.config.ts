@@ -3,6 +3,7 @@ import { DatabaseFactory } from './database.factory';
 import { Injectable } from '@nestjs/common';
 import { Role } from '../models/user/role';
 import { User } from '../models/user/user';
+import { Orcid } from '../models/user/orcid';
 import { Project } from '../models/project/project';
 import { ProjectApproval } from '../models/project/project-approval';
 import { ProjectUser } from '../models/project/project-user';
@@ -40,6 +41,7 @@ export class TypeormConfigService implements TypeOrmOptionsFactory {
 				// user
 				Role,
 				User,
+				Orcid,
 				// project
 				Project,
 				ProjectApproval,

@@ -9,7 +9,8 @@ export class UsersModel {
 	async findUserById(id: number): Promise<User | null> {
 		return this.dataSource.getRepository(User).findOne({
 			relations: {
-				role: true
+				role: true,
+				orcids: true
 			},
 			where: {
 				id
@@ -20,7 +21,8 @@ export class UsersModel {
 	async findUserByExternalId(externalId: string): Promise<User | null> {
 		return this.dataSource.getRepository(User).findOne({
 			relations: {
-				role: true
+				role: true,
+				orcids: true
 			},
 			where: {
 				externalId

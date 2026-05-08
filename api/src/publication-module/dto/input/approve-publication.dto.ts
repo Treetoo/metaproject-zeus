@@ -1,3 +1,5 @@
 export class ApprovePublicationDto {
-	weight: number;
+	id: number;
+	weight?: number;
+	reviewerNote?: string;
 }

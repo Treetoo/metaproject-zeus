@@ -46,7 +46,7 @@ export class PublicationService {
 			return this.createBySpecificType(userId, input, isStepUp);
 		}
 
-		input.type = IdentifierDetectionService.detect(input.uniqueId);
+		input.type = IdentifierDetectionService.detectPublicationIdType(input.uniqueId);
 
 		if (input.type !== 'unknown') {
 			return this.createBySpecificType(userId, input, isStepUp);
@@ -82,6 +82,10 @@ export class PublicationService {
 			throw new PublicationNotFoundApiException();
 		}
 
+		if (publication.status === 'approved') {
+			throw new ApiException(403, 'Cannot update an approved publication.', 403);
+		}
+
 		await this.dataSource
 			.createQueryBuilder()
 			.update(Publication)
@@ -90,7 +94,8 @@ export class PublicationService {
 				author: input.authors,
 				year: input.year,
 				journal: input.journal,
-				url: input.url
+				url: input.url,
+				status: 'pending'
 			})
 			.where('id = :id AND ownerId = :ownerId', { id: publicationId, ownerId: userId })
 			.execute();

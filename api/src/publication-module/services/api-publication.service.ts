@@ -6,10 +6,10 @@ import { lastValueFrom } from 'rxjs';
 import * as dotenv from 'dotenv';
 import { PublicationDto } from '../dto/publication.dto';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
-import { ResearcherIdNotFoundApiException } from '../../error-module/errors/publications/researcher-id-not-found.api-exception';
 import { PublicationMapper } from '../mapper/publication.mapper';
 import { ResearcherWorksListDto } from '../dto/researcher-works.dto';
 import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
+import { ApiException } from '../../error-module/api-exception';
 
 type DoiResolver = {
 	name: string;
@@ -57,18 +57,21 @@ export class ApiPublicationService {
 		if (type === 'nma') return await this.getPublicationByNma(id);
 		if (type === 'isbn') return await this.getPublicationByIsbn(id);
 
-		return this.getPublicationByDoi(id);
+		throw new ApiException(400, 'Invalid identifier type', 400);
 	}
 
-	async getPublicationsByResearcherId(orcid: string): Promise<ResearcherWorksListDto> {
-		const response = await this.getWorksByResearcherId(orcid);
-		return this.publicationMapper.mapOrcidApiResponseToDto(response.data, orcid);
+	async getPublicationsByResearcherIdAndType(id: string, type: string): Promise<ResearcherWorksListDto> {
+		if (type === 'orcid') return await this.getWorksByOrcidId(id);
+		if (type === 'openalex') {
+		} // TODO:
+
+		throw new ApiException(400, 'Invalid identifier type', 400);
 	}
 
 	async getPublicationByPubmedId(pmid: string): Promise<PublicationDto> {
 		const baseUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 		const endPoint = `esummary.fcgi?db=pubmed&id=${pmid}&retmode=json`;
-		const response = await this.fetchPubIdResolver(baseUrl, endPoint);
+		const response = await this.fetchFromExternalApi(baseUrl, endPoint);
 		return this.publicationMapper.mapPubmedApiResponseToDto(response.data.result, pmid);
 	}
 
@@ -76,14 +79,14 @@ export class ApiPublicationService {
 		dotenv.config();
 		const baseUrl = 'https://www.googleapis.com/books/v1';
 		const endPoint = `volumes?q=isbn:${isbn}&key=${process.env['GOOGLE_BOOKS_API']}`;
-		const response = await this.fetchPubIdResolver(baseUrl, endPoint);
+		const response = await this.fetchFromExternalApi(baseUrl, endPoint);
 		return this.publicationMapper.mapIsbnApiResponseToDto(response.data.items[0], isbn);
 	}
 
 	async getPublicationByArxivId(arxiv: string): Promise<PublicationDto> {
 		const baseUrl = 'http://export.arxiv.org/api';
 		const endPoint = `query?id_list=${arxiv}`;
-		const response = await this.fetchPubIdResolver(baseUrl, endPoint);
+		const response = await this.fetchFromExternalApi(baseUrl, endPoint);
 		const parser = new XMLParser();
 		const xmlData = parser.parse(response.data);
 		return this.publicationMapper.mapArxivApiResponseToDto(xmlData, arxiv);
@@ -92,7 +95,7 @@ export class ApiPublicationService {
 	async getPublicationByDoi(doi: string): Promise<PublicationDto> {
 		for (const resolver of this.resolvers) {
 			try {
-				const response = await this.fetchPubIdResolver(resolver.baseUrl, resolver.endpoint(doi));
+				const response = await this.fetchFromExternalApi(resolver.baseUrl, resolver.endpoint(doi));
 				return resolver.mapper(response.data);
 			} catch (error) {
 				if (error instanceof PublicationNotFoundApiException) {
@@ -105,34 +108,19 @@ export class ApiPublicationService {
 	}
 
 	async getPublicationByNma(nma: string): Promise<PublicationDto> {
-		const response = await this.fetchPubIdResolver(nma, '');
+		const response = await this.fetchFromExternalApi(nma, '');
 		return this.publicationMapper.mapNmaApiResponseToDto(response.data);
 	}
 
-	private async getWorksByResearcherId(id: string) {
-		try {
-			return await this.fetchExternalApi('https://api.openalex.org', `works?filter=author.orcid:${id}`);
-		} catch (error) {
-			if (error.response?.status === 404) {
-				throw new ResearcherIdNotFoundApiException();
-			}
-			throw error;
-		}
-	}
-
-	private async fetchPubIdResolver(baseUrl: string, endpoint: string) {
-		try {
-			return await this.fetchExternalApi(baseUrl, endpoint);
-		} catch (error) {
-			if (error.response?.status === 404) {
-				throw new PublicationNotFoundApiException();
-			}
-			throw error;
-		}
+	private async getWorksByOrcidId(id: string) {
+		const base = 'https://api.openalex.org';
+		const endpoint = `works?filter=author.orcid:${id}`;
+		const response = await this.fetchFromExternalApi(base, endpoint);
+		return this.publicationMapper.mapOrcidApiResponseToDto(response.data, id);
 	}
 
 	// Generic HTTP layer
-	private async fetchExternalApi(baseUrl: string, endpoint: string) {
+	private async fetchFromExternalApi(baseUrl: string, endpoint: string) {
 		const response$ = this.httpService.request({
 			url: baseUrl + (endpoint ? `/${endpoint}` : ''),
 			method: 'GET',
