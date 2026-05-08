@@ -33,8 +33,24 @@ export class PublicationService {
 		private readonly apiPublicationService: ApiPublicationService
 	) {}
 
-	async getUserPublications(userId: number, pagination: Pagination, sorting: Sorting | null) {
-		return this.publicationModel.getUserPublications(userId, pagination, sorting);
+	async getUserPublications(
+		userId: number,
+		pagination: Pagination,
+		sorting: Sorting | null,
+		status?: string,
+		search?: string
+	) {
+		return this.publicationModel.getUserPublications(userId, pagination, sorting, status, search);
+	}
+
+	async getUserCreditedPublications(
+		userId: number,
+		pagination: Pagination,
+		sorting: Sorting | null,
+		status?: string,
+		search?: string
+	) {
+		return this.publicationModel.getUserCreditedPublications(userId, pagination, sorting, status, search);
 	}
 
 	async createOwnedPublicationById(

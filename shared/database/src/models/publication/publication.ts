@@ -2,13 +2,12 @@ import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, Un
 import { TimeEntity } from '../time-entity';
 import { Project } from '../project/project';
 import { User } from '../user/user';
-import { ProjectPublication } from './project-publication';
+import { PublicationCredit } from './publication-credit';
+import { PublicationStakeholder } from './publication-stakeholder';
 
 export type PublicationSource = 'manual' | 'doi' | 'pubmed' | 'isbn' | 'nma';
 
 @Entity()
-// Original code:
-// @Unique(['uniqueId', 'projectId'])
 @Unique(['ownerId', 'uniqueId'])
 export class Publication {
 	@PrimaryGeneratedColumn()
@@ -66,16 +65,19 @@ export class Publication {
 	@ManyToOne(() => User)
 	owner: User;
 
-	// Project association is now optional
+	@OneToMany(() => PublicationCredit, (credit) => credit.publication)
+	credits: PublicationCredit[];
+
+	@OneToMany(() => PublicationStakeholder, (stakeholder) => stakeholder.publication)
+	stakeholders: PublicationStakeholder[];
+
+	// Each publication belongs to exactly one project
 	@Column({ nullable: true })
 	@Index()
 	projectId: number | null;
 
 	@ManyToOne(() => Project)
 	project: Project;
-
-	@OneToMany(() => ProjectPublication, (link) => link.publication)
-	projectLinks: ProjectPublication[];
 
 	@Column(() => TimeEntity)
 	time: TimeEntity;

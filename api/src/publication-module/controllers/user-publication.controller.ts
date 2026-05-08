@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequestUser } from '../../auth-module/decorators/user.decorator';
 import { UserDto } from '../../users-module/dtos/user.dto';
@@ -33,9 +33,17 @@ export class UserPublicationController {
 	async listMine(
 		@RequestUser() user: UserDto,
 		@GetPagination() pagination: Pagination,
-		@GetSorting() sorting: Sorting | null
+		@GetSorting() sorting: Sorting | null,
+		@Query('status') status?: string,
+		@Query('search') search?: string
 	) {
-		const [publications, count] = await this.publicationService.getUserPublications(user.id, pagination, sorting);
+		const [publications, count] = await this.publicationService.getUserPublications(
+			user.id,
+			pagination,
+			sorting,
+			status,
+			search
+		);
 		const items = publications.map((p) => this.publicationMapper.mapPublicationToPublicationDetailDto(p, user.id));
 		return this.paginationMapper.toPaginatedResult(pagination, count, items);
 	}
@@ -95,5 +103,30 @@ export class UserPublicationController {
 	@ApiOperation({ summary: 'Delete my publication permanently' })
 	async deleteMine(@Param('id') id: number, @RequestUser() user: UserDto) {
 		await this.publicationService.deleteOwnedPublication(id, user.id);
+	}
+
+	@Get('/credited')
+	@MinRoleCheck(RoleEnum.USER)
+	@ApiOperation({
+		summary: 'List my credited publications',
+		description: 'List publications where current user is credited.'
+	})
+	@ApiOkResponse({ description: 'Your credited publications.', type: PublicationListDto })
+	async listMyCredited(
+		@RequestUser() user: UserDto,
+		@GetPagination() pagination: Pagination,
+		@GetSorting() sorting: Sorting | null,
+		@Query('status') status?: string,
+		@Query('search') search?: string
+	) {
+		const [publications, count] = await this.publicationService.getUserCreditedPublications(
+			user.id,
+			pagination,
+			sorting,
+			status,
+			search
+		);
+		const items = publications.map((p) => this.publicationMapper.mapPublicationToPublicationDetailDto(p, user.id));
+		return this.paginationMapper.toPaginatedResult(pagination, count, items);
 	}
 }

@@ -14,6 +14,8 @@ import { SnakeNamingStrategy } from '../strategies/snake-case.strategy';
 import { File } from '../models/file';
 import { Publication } from '../models/publication/publication';
 import { ProjectPublication } from '../models/publication/project-publication';
+import { PublicationCredit } from '../models/publication/publication-credit';
+import { PublicationStakeholder } from '../models/publication/publication-stakeholder';
 import { AttributeType } from '../models/attribute-type';
 import { ResourceAttributeType } from '../models/resource/resource-attribute-type';
 import { ResourceToAttributeType } from '../models/resource/resource-to-attribute-type';
@@ -60,6 +62,8 @@ export class TypeormConfigService implements TypeOrmOptionsFactory {
 				// publications
 				Publication,
 				ProjectPublication,
+				PublicationCredit,
+				PublicationStakeholder,
 				// resource usage
 				ResourceUsageEvent,
 				ResourceUsageSummary,
