@@ -13,6 +13,7 @@ import { PublicationModel } from './models/publication.model';
 import { ProjectPublicationModel } from './models/project-publication.model';
 import { PublicationApprovalService } from './services/publication-approval.service';
 import { PublicationApprovalController } from './controllers/publication-approval.controller';
+import { PublicationCreditApprovalController } from './controllers/publication-credit-approval.controller';
 import { ResearcherService } from './services/researcher.service';
 
 @Module({
@@ -32,7 +33,8 @@ import { ResearcherService } from './services/researcher.service';
 		PublicationController,
 		ProjectPublicationController,
 		UserPublicationController,
-		PublicationApprovalController
+		PublicationApprovalController,
+		PublicationCreditApprovalController
 	]
 })
 export class PublicationModule {}

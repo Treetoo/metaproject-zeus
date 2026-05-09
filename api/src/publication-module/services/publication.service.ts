@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { Publication } from 'resource-manager-database';
+import { Publication, PublicationCredit, PublicationStakeholder } from 'resource-manager-database';
 import { ApiException } from 'src/error-module/api-exception';
 import { PublicationInputDto } from '../dto/input/publication-input.dto';
 import {
@@ -31,7 +31,7 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) {}
+	) { }
 
 	async getUserPublications(
 		userId: number,
@@ -51,6 +51,52 @@ export class PublicationService {
 		search?: string
 	) {
 		return this.publicationModel.getUserCreditedPublications(userId, pagination, sorting, status, search);
+	}
+
+	async getUserStakeholderPublications(
+		userId: number,
+		pagination: Pagination,
+		sorting: Sorting | null,
+		status?: string,
+		search?: string
+	) {
+		return this.publicationModel.getUserStakeholderPublications(userId, pagination, sorting, status, search);
+	}
+
+	async addCreditRequest(requestingUserId: number, publicationId: number) {
+		const publication = await this.publicationModel.findById(publicationId);
+		if (!publication) {
+			throw new PublicationNotFoundApiException();
+		}
+
+		// Validate that the user is not trying to request credit for someone else
+		// The requestingUserId is from the authenticated token, so they can only request credit for themselves
+		const existingCredit = await this.dataSource
+			.createQueryBuilder()
+			.select()
+			.from(PublicationCredit, 'pc')
+			.where('pc.publicationId = :publicationId', { publicationId })
+			.andWhere('pc.userId = :userId', { userId: requestingUserId })
+			.getOne();
+
+		if (existingCredit) {
+			if (existingCredit.status === 'approved') {
+				throw new ApiException(409, 'You are already credited for this publication', 409);
+			}
+			// If pending or rejected, allow re-requesting
+			return;
+		}
+
+		await this.dataSource
+			.createQueryBuilder()
+			.insert()
+			.into(PublicationCredit)
+			.values({
+				publicationId,
+				userId: requestingUserId,
+				status: 'pending'
+			})
+			.execute();
 	}
 
 	async createOwnedPublicationById(
@@ -86,7 +132,8 @@ export class PublicationService {
 				...externalData,
 				source: input.type,
 				project: { projectId: input.project.projectId },
-				uniqueId: input.uniqueId
+				uniqueId: input.uniqueId,
+				stakeholderIds: input.stakeholderIds
 			},
 			isStepUp
 		);
@@ -154,6 +201,29 @@ export class PublicationService {
 					userId,
 					manager
 				);
+
+				// Check if project is personal and handle stakeholders accordingly
+				const project = await this.projectModel.getProject(input.project.projectId, false);
+				if (project?.isPersonal) {
+					// Add userId to stakeholderIds if not already present
+					if (!input.stakeholderIds?.includes(userId)) {
+						input.stakeholderIds = [...(input.stakeholderIds ?? []), userId];
+					}
+					if (input.stakeholderIds && input.stakeholderIds.length > 0) {
+						const stakeholderValues = input.stakeholderIds.map((stakeholderId) => ({
+							publicationId,
+							userId: stakeholderId
+						}));
+						await manager
+							.createQueryBuilder()
+							.insert()
+							.into(PublicationStakeholder)
+							.values(stakeholderValues)
+							.orIgnore()
+							.execute();
+					}
+				}
+
 				await this.resetLegacyProjectColumn(publicationId, manager);
 			});
 

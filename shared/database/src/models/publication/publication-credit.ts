@@ -23,6 +23,13 @@ export class PublicationCredit {
 	@Column()
 	userId: number;
 
+	@Column({
+		type: 'enum',
+		enum: ['pending', 'approved', 'rejected'],
+		default: 'pending'
+	})
+	status: 'pending' | 'approved' | 'rejected';
+
 	@Column(() => TimeEntity)
 	time: TimeEntity;
 }

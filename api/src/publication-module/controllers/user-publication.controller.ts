@@ -126,7 +126,50 @@ export class UserPublicationController {
 			status,
 			search
 		);
+		const items = publications.map((p: any) => ({
+			...this.publicationMapper.mapPublicationToPublicationDetailDto(p, user.id),
+			creditStatus: p.creditStatus
+		}));
+		return this.paginationMapper.toPaginatedResult(pagination, count, items);
+	}
+
+	@Get('/stakeholder')
+	@MinRoleCheck(RoleEnum.USER)
+	@ApiOperation({
+		summary: 'List my stakeholder publications',
+		description: 'List publications where current user is a stakeholder.'
+	})
+	@ApiOkResponse({ description: 'Your stakeholder publications.', type: PublicationListDto })
+	async listMyStakeholder(
+		@RequestUser() user: UserDto,
+		@GetPagination() pagination: Pagination,
+		@GetSorting() sorting: Sorting | null,
+		@Query('status') status?: string,
+		@Query('search') search?: string
+	) {
+		const [publications, count] = await this.publicationService.getUserStakeholderPublications(
+			user.id,
+			pagination,
+			sorting,
+			status,
+			search
+		);
 		const items = publications.map((p) => this.publicationMapper.mapPublicationToPublicationDetailDto(p, user.id));
 		return this.paginationMapper.toPaginatedResult(pagination, count, items);
+	}
+
+	@Post('/credit-request/:publicationId')
+	@HttpCode(201)
+	@MinRoleCheck(RoleEnum.USER)
+	@ApiOperation({
+		summary: 'Request credit for a publication',
+		description: 'Add the current user as a credit to the specified publication.'
+	})
+	@ApiCreatedResponse({ description: 'Credit request created successfully.' })
+	async requestCredit(
+		@Param('publicationId') publicationId: number,
+		@RequestUser() user: UserDto
+	) {
+		await this.publicationService.addCreditRequest(user.id, publicationId);
 	}
 }

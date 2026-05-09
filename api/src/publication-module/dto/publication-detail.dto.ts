@@ -48,4 +48,10 @@ export class PublicationDetailDto {
 	 * Comment from the reviewer.
 	 */
 	reviewerNote?: string;
+
+	/**
+	 * Credit status for the current user (only populated for /my/publications/credited endpoint).
+	 * Either pending, approved or rejected.
+	 */
+	creditStatus?: 'pending' | 'approved' | 'rejected';
 }

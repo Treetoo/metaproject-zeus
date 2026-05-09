@@ -13,10 +13,12 @@ export class CreateOwnedPublicationDto {
 	uniqueId?: string;
 	project: AssignPublicationDto;
 	source: Exclude<PublicationIdentifierTypeDto, 'unknown'> | 'manual';
+	stakeholderIds?: number[];
 }
 
 export class CreateOwnedPublicationByIdDto {
 	uniqueId: string;
 	type: PublicationIdentifierTypeDto;
 	project: AssignPublicationDto;
+	stakeholderIds?: number[];
 }

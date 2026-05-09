@@ -25,7 +25,7 @@ export class ProjectPublication {
 	@ManyToOne(() => Project, { onDelete: 'CASCADE' })
 	project: Project;
 
-	@ManyToOne(() => Publication, (publication) => publication.projectLinks, { onDelete: 'CASCADE' })
+	@ManyToOne(() => Publication, { onDelete: 'CASCADE' })
 	publication: Publication;
 
 	@ManyToOne(() => User)

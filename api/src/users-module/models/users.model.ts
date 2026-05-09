@@ -44,4 +44,17 @@ export class UsersModel {
 
 		return user.role;
 	}
+
+	async searchUsers(query: string): Promise<User[]> {
+		const repo = this.dataSource.getRepository(User);
+		const qb = repo.createQueryBuilder('u');
+
+		if (query && query.length >= 3) {
+			qb.where('(u.name ILIKE :q OR u.username ILIKE :q OR u.email ILIKE :q)', {
+				q: `%${query}%`
+			});
+		}
+
+		return qb.take(50).getMany();
+	}
 }
