@@ -4,11 +4,7 @@ import { DataSource, EntityManager } from 'typeorm';
 import { Publication, PublicationCredit, PublicationStakeholder } from 'resource-manager-database';
 import { ApiException } from 'src/error-module/api-exception';
 import { PublicationInputDto } from '../dto/input/publication-input.dto';
-import {
-	AssignPublicationDto,
-	CreateOwnedPublicationDto,
-	CreateOwnedPublicationByIdDto
-} from '../dto/input/publication-assign.dto';
+import { AssignPublicationDto, CreateOwnedPublicationDto } from '../dto/input/publication-assign.dto';
 import { ProjectPermissionService } from '../../project-module/services/project-permission.service';
 import { ProjectPermissionEnum } from '../../project-module/enums/project-permission.enum';
 import { ProjectNotFoundApiException } from '../../error-module/errors/projects/project-not-found.api-exception';
@@ -19,6 +15,11 @@ import { PublicationModel } from '../models/publication.model';
 import { ProjectPublicationModel } from '../models/project-publication.model';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 import { PublicationRequiresProjectContextApiException } from '../../error-module/errors/publications/publication-requires-project-context.api-exception';
+import { PublicationAlreadyPresentApiException } from '../../error-module/errors/publications/publication-already-present.api-exception';
+import { PublicationAlreadyCreditedApiException } from '../../error-module/errors/publications/publication-already-credited.api-exception';
+import { PublicationUpdateNotAllowedApiException } from '../../error-module/errors/publications/publication-update-not-allowed.api-exception';
+import { PublicationNotFoundInSearchApiException } from '../../error-module/errors/publications/publication-not-found-in-search.api-exception';
+import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
 import { IdentifierDetectionService } from './identifier-detection.service';
 import { ApiPublicationService } from './api-publication.service';
 
@@ -31,7 +32,7 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) { }
+	) {}
 
 	async getUserPublications(
 		userId: number,
@@ -81,7 +82,7 @@ export class PublicationService {
 
 		if (existingCredit) {
 			if (existingCredit.status === 'approved') {
-				throw new ApiException(409, 'You are already credited for this publication', 409);
+				throw new PublicationAlreadyCreditedApiException();
 			}
 			// If pending or rejected, allow re-requesting
 			return;
@@ -99,44 +100,29 @@ export class PublicationService {
 			.execute();
 	}
 
-	async createOwnedPublicationById(
-		userId: number,
-		input: CreateOwnedPublicationByIdDto,
-		isStepUp: boolean
-	): Promise<number> {
-		if (input.type !== 'unknown') {
-			return this.createBySpecificType(userId, input, isStepUp);
+	async getPublicationByIdentifier(identifier: string, type: PublicationIdentifierTypeDto = 'unknown') {
+		if (type === 'unknown') {
+			type = IdentifierDetectionService.detectPublicationIdType(identifier);
 		}
 
-		input.type = IdentifierDetectionService.detectPublicationIdType(input.uniqueId);
-
-		if (input.type !== 'unknown') {
-			return this.createBySpecificType(userId, input, isStepUp);
-		}
-		throw new ApiException(400, 'Unable to detect type from identifier.', 400);
-	}
-
-	private async createBySpecificType(userId: number, input: CreateOwnedPublicationByIdDto, isStepUp: boolean) {
-		if (input.type === 'unknown') {
-			throw new PublicationNotFoundApiException();
-		}
-		const externalData = await this.apiPublicationService.getPublicationByIdAndType(input.uniqueId, input.type);
-
-		if (!externalData) {
-			throw new PublicationNotFoundApiException();
+		if (type === 'unknown') {
+			throw new ApiException(
+				400,
+				'Unknown identifier type. Please specify the identifier type (DOI, PMID, ISBN, etc.) and try again.',
+				400
+			);
 		}
 
-		return this.createOwnedPublication(
-			userId,
-			{
-				...externalData,
-				source: input.type,
-				project: { projectId: input.project.projectId },
-				uniqueId: input.uniqueId,
-				stakeholderIds: input.stakeholderIds
-			},
-			isStepUp
-		);
+		try {
+			return await this.apiPublicationService.getPublicationByIdAndType(identifier, type);
+		} catch (error) {
+			if (error instanceof PublicationNotFoundApiException) {
+				throw new PublicationNotFoundInSearchApiException(
+					`No publication found for the provided ${type} identifier. Please verify the identifier and try again.`
+				);
+			}
+			throw error;
+		}
 	}
 
 	async updateOwnedPublication(userId: number, publicationId: number, input: CreateOwnedPublicationDto) {
@@ -146,7 +132,7 @@ export class PublicationService {
 		}
 
 		if (publication.status === 'approved') {
-			throw new ApiException(403, 'Cannot update an approved publication.', 403);
+			throw new PublicationUpdateNotAllowedApiException();
 		}
 
 		await this.dataSource
@@ -230,7 +216,7 @@ export class PublicationService {
 			return publicationId;
 		} catch (error) {
 			if (error.code === '23505') {
-				throw new ApiException(409, 'Publication is already present', 409);
+				throw new PublicationAlreadyPresentApiException();
 			}
 			throw error;
 		}
@@ -342,6 +328,20 @@ export class PublicationService {
 		if (!publication) {
 			throw new PublicationNotFoundApiException();
 		}
+
+		await this.dataSource
+			.createQueryBuilder()
+			.delete()
+			.from(PublicationCredit)
+			.where('publicationId = :publicationId', { publicationId })
+			.execute();
+
+		await this.dataSource
+			.createQueryBuilder()
+			.delete()
+			.from(PublicationStakeholder)
+			.where('publicationId = :publicationId', { publicationId })
+			.execute();
 
 		await this.dataSource
 			.createQueryBuilder()

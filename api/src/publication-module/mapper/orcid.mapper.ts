@@ -20,13 +20,13 @@ export class PublicationMapper {
 	): PublicationDetailDto {
 		return {
 			id: publication.id,
-			title: publication.title,
-			authors: publication.author,
-			journal: publication.journal,
+			title: publication.title || 'Missing',
+			authors: publication.author || 'Missing',
+			journal: publication.journal || 'Missing',
 			uniqueId: publication.uniqueId,
 			status: publication.status,
-			url: publication.url,
-			year: publication.year,
+			url: publication.url || 'Missing',
+			year: publication.year ?? 1900,
 			isOwner: currentUserId ? publication['ownerId'] === currentUserId : false
 		};
 	}

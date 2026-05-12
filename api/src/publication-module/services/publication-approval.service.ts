@@ -7,7 +7,7 @@ import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 
 @Injectable()
 export class PublicationApprovalService {
-	constructor(private dataSource: DataSource) {}
+	constructor(private dataSource: DataSource) { }
 
 	async getPublicationRequests(
 		pagination,
@@ -338,7 +338,7 @@ export class PublicationApprovalService {
 		const rawData = await dataQuery.getRawMany();
 
 		// Map raw results to Publication objects with creditStatus and requestedBy
-		const data = rawData.map(row => ({
+		const data = rawData.map((row) => ({
 			id: row.p_id,
 			ownerId: row.p_ownerId,
 			title: row.p_title,
@@ -363,9 +363,13 @@ export class PublicationApprovalService {
 			throw new ApiException(400, 'Invalid or missing weight', 400);
 
 		return this.dataSource.transaction(async (manager) => {
-			await manager.update(PublicationCredit, { publicationId }, {
-				status: 'approved'
-			});
+			await manager.update(
+				PublicationCredit,
+				{ publicationId },
+				{
+					status: 'approved'
+				}
+			);
 		});
 	}
 
@@ -377,9 +381,13 @@ export class PublicationApprovalService {
 				throw new PublicationNotFoundApiException();
 			}
 
-			await manager.update(PublicationCredit, { publicationId }, {
-				status: 'rejected'
-			});
+			await manager.update(
+				PublicationCredit,
+				{ publicationId },
+				{
+					status: 'rejected'
+				}
+			);
 		});
 	}
 
@@ -429,7 +437,7 @@ export class PublicationApprovalService {
 		const rawData = await builder.getRawMany();
 
 		// Map raw results to Publication objects with creditStatus and requestedBy
-		return rawData.map(row => ({
+		return rawData.map((row) => ({
 			id: row.p_id,
 			ownerId: row.p_ownerId,
 			title: row.p_title,

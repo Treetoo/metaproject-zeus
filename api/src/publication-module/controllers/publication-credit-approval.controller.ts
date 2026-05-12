@@ -36,12 +36,7 @@ export class PublicationCreditApprovalController {
 		@Query('status') status?: string,
 		@Query('search') search?: string
 	) {
-		const [publications, count] = await this.approvalService.getCreditRequests(
-			pagination,
-			sorting,
-			status,
-			search
-		);
+		const [publications, count] = await this.approvalService.getCreditRequests(pagination, sorting, status, search);
 
 		const items = publications.map((publication: any) => ({
 			id: publication.id,

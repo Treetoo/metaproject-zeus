@@ -74,7 +74,7 @@ export class UserOrcidController {
 
 		const users = await this.usersModel.searchUsers(query);
 
-		const userInfo: UserInfoResponse[] = users.map(u => ({
+		const userInfo: UserInfoResponse[] = users.map((u) => ({
 			id: u.id,
 			username: u.username,
 			name: u.name,

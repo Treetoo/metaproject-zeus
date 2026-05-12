@@ -3,18 +3,19 @@ import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nest
 import { PublicationDto } from '../dto/publication.dto';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 import { Public } from '../../auth-module/decorators/public.decorator';
-import { ApiPublicationService } from '../services/api-publication.service';
 import { ResearcherService } from '../services/researcher.service';
+import { PublicationService } from '../services/publication.service';
+import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
 
 @Controller('/publication-search')
 @ApiTags('Publication')
 export class PublicationSearchController {
 	constructor(
-		private readonly apiPublicationService: ApiPublicationService,
+		private readonly publicationService: PublicationService,
 		private readonly researcherService: ResearcherService
 	) {}
 
-	@Get('/doi/:doi')
+	@Get('/publication-id/:id/:type')
 	@Public()
 	@ApiOperation({
 		summary: 'Get publication by DOI.',
@@ -28,8 +29,8 @@ export class PublicationSearchController {
 		description: 'Publication with DOI not found.',
 		type: PublicationNotFoundApiException
 	})
-	public async getPublicationByDoi(@Param('doi') doi: string) {
-		return this.apiPublicationService.getPublicationByDoi(doi);
+	public async getPublicationById(@Param('id') id: string, @Param('type') type: PublicationIdentifierTypeDto) {
+		return this.publicationService.getPublicationByIdentifier(id, type);
 	}
 
 	@Get('/researcher-id/:id/:type')

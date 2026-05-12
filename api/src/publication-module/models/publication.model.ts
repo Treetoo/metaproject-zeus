@@ -151,7 +151,7 @@ export class PublicationModel {
 		const rawData = await dataQuery.getRawMany();
 
 		// Map raw results to Publication objects with creditStatus
-		const data = rawData.map(row => ({
+		const data = rawData.map((row) => ({
 			id: row.p_id,
 			ownerId: row.p_ownerId,
 			title: row.p_title,

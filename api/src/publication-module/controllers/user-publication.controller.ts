@@ -10,11 +10,7 @@ import { PublicationMapper } from '../mapper/publication.mapper';
 import { PaginationMapper } from '../../config-module/mappers/pagination.mapper';
 import { MinRoleCheck } from '../../permission-module/decorators/min-role.decorator';
 import { RoleEnum } from '../../permission-module/models/role.enum';
-import {
-	CreateOwnedPublicationDto,
-	AssignPublicationDto,
-	CreateOwnedPublicationByIdDto
-} from '../dto/input/publication-assign.dto';
+import { CreateOwnedPublicationDto, AssignPublicationDto } from '../dto/input/publication-assign.dto';
 import { IsStepUp } from '../../auth-module/decorators/is-step-up.decorator';
 
 @Controller('/my/publications')
@@ -68,20 +64,6 @@ export class UserPublicationController {
 	@ApiCreatedResponse({ description: 'Publication updated.' })
 	async updateMine(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: CreateOwnedPublicationDto) {
 		await this.publicationService.updateOwnedPublication(user.id, id, body);
-	}
-
-	@Post('/add-by-id')
-	@HttpCode(201)
-	@MinRoleCheck(RoleEnum.USER)
-	@ApiOperation({ summary: 'Create my publication by id' })
-	@ApiCreatedResponse({ description: 'Publication created.' })
-	async createMineById(
-		@RequestUser() user: UserDto,
-		@Body() body: CreateOwnedPublicationByIdDto,
-		@IsStepUp() isStepUp: boolean
-	) {
-		const id = await this.publicationService.createOwnedPublicationById(user.id, body, isStepUp);
-		return { id };
 	}
 
 	@Post('/:id/assign')
@@ -166,10 +148,7 @@ export class UserPublicationController {
 		description: 'Add the current user as a credit to the specified publication.'
 	})
 	@ApiCreatedResponse({ description: 'Credit request created successfully.' })
-	async requestCredit(
-		@Param('publicationId') publicationId: number,
-		@RequestUser() user: UserDto
-	) {
+	async requestCredit(@Param('publicationId') publicationId: number, @RequestUser() user: UserDto) {
 		await this.publicationService.addCreditRequest(user.id, publicationId);
 	}
 }
