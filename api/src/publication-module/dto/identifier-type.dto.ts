@@ -8,4 +8,4 @@ export type PublicationIdentifierTypeDto =
 	| 'unknown'
 	| 'openalex'
 	| 'manual';
-export type ResearcherIdentifierTypeDto = 'orcid' | 'openalex' | 'unknown';
+export type ResearcherIdentifierTypeDto = 'orcid' | 'res_openalex' | 'unknown';

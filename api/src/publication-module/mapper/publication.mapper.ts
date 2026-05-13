@@ -96,7 +96,7 @@ export class PublicationMapper {
 		};
 	}
 
-	public mapOrcidApiResponseToDto(data: any, id: string): ResearcherWorksListDto {
+	public mapOpenAlexAuthorApiResponseToDto(data: any, id: string): ResearcherWorksListDto {
 		const works = (data.results || []).map((work: any): PublicationDto => {
 			const workId = work.id;
 			const title = work.display_name || work.title || '';
@@ -119,13 +119,36 @@ export class PublicationMapper {
 				uniqueId: workId || 'Missing',
 				url: url || 'Missing',
 				journal: work.primary_location.raw_source_name || 'Missing',
-				source: 'orcid'
+				source: 'openalex'
 			};
 		});
 
 		return {
 			id: id,
 			works
+		};
+	}
+
+	public mapOpenAlexWorkResponseToDto(data: any): PublicationDto {
+		const authorships = data.authorships || [];
+		const authors = authorships
+			.map((a: any) => a.author?.display_name || '')
+			.filter(Boolean)
+			.join(', ');
+
+		const identifiers = data.identifiers || [];
+		const doi = identifiers.find((i: any) => i.source === 'doi')?.identifier;
+		const landingPageUrl = data.primary_location?.landing_page_url;
+		const url = landingPageUrl ?? (doi ? `https://doi.org/${doi}` : 'Missing');
+
+		return {
+			title: data.title || 'Missing',
+			authors: authors || 'Missing',
+			year: data.publication_year || 'Missing',
+			uniqueId: data.id || 'Missing',
+			url,
+			journal: data.containing_volume?.title || data.source?.display_name || 'Missing',
+			source: 'openalex'
 		};
 	}
 

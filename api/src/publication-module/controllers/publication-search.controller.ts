@@ -13,7 +13,7 @@ export class PublicationSearchController {
 	constructor(
 		private readonly publicationService: PublicationService,
 		private readonly researcherService: ResearcherService
-	) {}
+	) { }
 
 	@Get('/publication-id/:id/:type')
 	@Public()
@@ -48,6 +48,6 @@ export class PublicationSearchController {
 		type: PublicationNotFoundApiException
 	})
 	public async getPublicationByResearherId(@Param('id') id: string, @Param('type') type: string) {
-		return await this.researcherService.searchByPublicationById(id, type);
+		return await this.researcherService.searchByResearcherIdAndType(id, type);
 	}
 }

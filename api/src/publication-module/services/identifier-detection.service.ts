@@ -14,7 +14,7 @@ export class IdentifierDetectionService {
 
 	private static readonly researcherPatterns: Array<{ type: ResearcherIdentifierTypeDto; pattern: RegExp }> = [
 		{ type: 'orcid', pattern: /^(\d{4}-){3}\d{3}[\dX]$/i },
-		{ type: 'openalex', pattern: /^a\d+$/i }
+		{ type: 'res_openalex', pattern: /^a\d+$/i }
 	];
 
 	static detectPublicationIdType(id: string): PublicationIdentifierTypeDto {
@@ -32,7 +32,7 @@ export class IdentifierDetectionService {
 		return 'unknown';
 	}
 
-	static detectResearcherIdType(id: string): PublicationIdentifierTypeDto {
+	static detectResearcherIdType(id: string): ResearcherIdentifierTypeDto {
 		const trimmed = id.trim();
 		const matches = this.researcherPatterns.filter(({ pattern }) => pattern.test(trimmed)).map(({ type }) => type);
 

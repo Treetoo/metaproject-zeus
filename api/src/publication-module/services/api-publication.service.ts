@@ -56,14 +56,14 @@ export class ApiPublicationService {
 		if (type === 'pubmed') return await this.getPublicationByPubmedId(id);
 		if (type === 'nma') return await this.getPublicationByNma(id);
 		if (type === 'isbn') return await this.getPublicationByIsbn(id);
+		if (type === 'openalex') return await this.getPublicationByOpenAlexWorkId(id);
 
 		throw new ApiException(400, 'Invalid identifier type', 400);
 	}
 
 	async getPublicationsByResearcherIdAndType(id: string, type: string): Promise<ResearcherWorksListDto> {
 		if (type === 'orcid') return await this.getWorksByOrcidId(id);
-		if (type === 'openalex') {
-		} // TODO:
+		if (type === 'res_openalex') return await this.getWorksByOpenAlexAuthorId(id);
 
 		throw new ApiException(400, 'Invalid identifier type', 400);
 	}
@@ -116,7 +116,23 @@ export class ApiPublicationService {
 		const base = 'https://api.openalex.org';
 		const endpoint = `works?filter=author.orcid:${id}`;
 		const response = await this.fetchFromExternalApi(base, endpoint);
-		return this.publicationMapper.mapOrcidApiResponseToDto(response.data, id);
+		return this.publicationMapper.mapOpenAlexAuthorApiResponseToDto(response.data, id);
+	}
+
+	async getPublicationByOpenAlexWorkId(workId: string): Promise<PublicationDto> {
+		const normalizedId = workId.toLowerCase().startsWith('w') ? workId : `W${workId}`;
+		const baseUrl = 'https://api.openalex.org';
+		const endpoint = `works/${normalizedId}`;
+		const response = await this.fetchFromExternalApi(baseUrl, endpoint);
+		return this.publicationMapper.mapOpenAlexWorkResponseToDto(response.data);
+	}
+
+	private async getWorksByOpenAlexAuthorId(authorId: string): Promise<ResearcherWorksListDto> {
+		const normalizedId = authorId.toLowerCase().startsWith('a') ? authorId : `A${authorId}`;
+		const baseUrl = 'https://api.openalex.org';
+		const endpoint = `works?filter=author.id:${normalizedId}`;
+		const response = await this.fetchFromExternalApi(baseUrl, endpoint);
+		return this.publicationMapper.mapOpenAlexAuthorApiResponseToDto(response.data, normalizedId);
 	}
 
 	// Generic HTTP layer

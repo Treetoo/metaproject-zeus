@@ -7,17 +7,14 @@ import { IdentifierDetectionService } from './identifier-detection.service';
 export class ResearcherService {
 	constructor(private readonly apiPublicationService: ApiPublicationService) {}
 
-	async searchByPublicationById(researcherId: string, idType: string) {
-		if (idType !== 'unknown') {
-			return this.apiPublicationService.getPublicationsByResearcherIdAndType(researcherId, idType);
+	async searchByResearcherIdAndType(researcherId: string, idType: string = 'unknown') {
+		if (idType === 'unknown') {
+			idType = IdentifierDetectionService.detectResearcherIdType(researcherId);
 		}
 
-		idType = IdentifierDetectionService.detectResearcherIdType(researcherId);
-
-		if (idType !== 'unknown') {
-			return this.apiPublicationService.getPublicationsByResearcherIdAndType(researcherId, idType);
+		if (idType === 'unknown') {
+			throw new ApiException(400, 'Unable to detect type from identifier.', 400);
 		}
-
-		throw new ApiException(400, 'Unable to detect type from identifier.', 400);
+		return this.apiPublicationService.getPublicationsByResearcherIdAndType(researcherId, idType);
 	}
 }
