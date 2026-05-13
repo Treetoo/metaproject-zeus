@@ -44,18 +44,41 @@ export class PerunDataService {
 					where: { name: 'USER' }
 				});
 
-				user = this.dataSource.getRepository(User).create({
-					source: 'perun',
-					externalId: persistentLogin,
-					email: preferredMail,
-					emailVerified: true,
-					username: username || persistentLogin.split('@')[0],
-					name: displayName || commonName || preferredMail,
-					roleId: defaultRole?.id || 1
-				});
+				try {
+					user = this.dataSource.getRepository(User).create({
+						source: 'perun',
+						externalId: persistentLogin,
+						email: preferredMail,
+						emailVerified: true,
+						username: username || persistentLogin.split('@')[0],
+						name: displayName || commonName || preferredMail,
+						roleId: defaultRole?.id || 1
+					});
 
-				user = await this.dataSource.getRepository(User).save(user);
-				this.logger.log(`Created new user ${user.username} (${user.id}) for einfraid: ${persistentLogin}`);
+					user = await this.dataSource.getRepository(User).save(user);
+					this.logger.log(`Created new user ${user.username} (${user.id}) for einfraid: ${persistentLogin}`);
+				} catch (error: any) {
+					if (error.code === '23505') {
+						this.logger.warn(
+							`Duplicate constraint violation when creating user for einfraid: ${persistentLogin}. User may have been created concurrently.`
+						);
+						const existingUser = await this.dataSource.getRepository(User).findOne({
+							where: {
+								source: 'perun',
+								externalId: persistentLogin
+							}
+						});
+						if (existingUser) {
+							user = existingUser;
+						} else {
+							this.logger.error(`Failed to retrieve existing user for einfraid: ${persistentLogin}`);
+							continue;
+						}
+					} else {
+						this.logger.error(`Error creating user for einfraid ${persistentLogin}: ${error.message}`);
+						continue;
+					}
+				}
 			}
 
 			const existingOrcids = await this.dataSource.getRepository(Orcid).find({
