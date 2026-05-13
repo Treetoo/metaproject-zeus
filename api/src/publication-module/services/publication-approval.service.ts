@@ -7,7 +7,7 @@ import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 
 @Injectable()
 export class PublicationApprovalService {
-	constructor(private dataSource: DataSource) { }
+	constructor(private dataSource: DataSource) {}
 
 	async getPublicationRequests(
 		pagination,

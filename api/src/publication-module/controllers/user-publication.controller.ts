@@ -44,6 +44,34 @@ export class UserPublicationController {
 		return this.paginationMapper.toPaginatedResult(pagination, count, items);
 	}
 
+	@Get('all-with-credit')
+	@MinRoleCheck(RoleEnum.USER)
+	@ApiOperation({
+		summary: 'Lists all publications with user credit status',
+		description: "List all publications with current user's credit status (approved, pending, rejected, or null)."
+	})
+	@ApiOkResponse({ description: 'All publications with your credit status.', type: PublicationListDto })
+	async listAllWithCredit(
+		@RequestUser() user: UserDto,
+		@GetPagination() pagination: Pagination,
+		@GetSorting() sorting: Sorting | null,
+		@Query('status') status?: string,
+		@Query('search') search?: string
+	) {
+		const [publications, count] = await this.publicationService.getAllPublicationsWithCreditStatus(
+			user.id,
+			pagination,
+			sorting,
+			status,
+			search
+		);
+		const items = publications.map((p: any) => ({
+			...this.publicationMapper.mapPublicationToPublicationDetailDto(p, user.id),
+			creditStatus: p.creditStatus
+		}));
+		return this.paginationMapper.toPaginatedResult(pagination, count, items);
+	}
+
 	@Post()
 	@HttpCode(201)
 	@MinRoleCheck(RoleEnum.USER)

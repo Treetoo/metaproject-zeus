@@ -64,6 +64,16 @@ export class PublicationService {
 		return this.publicationModel.getUserStakeholderPublications(userId, pagination, sorting, status, search);
 	}
 
+	async getAllPublicationsWithCreditStatus(
+		userId: number,
+		pagination: Pagination,
+		sorting: Sorting | null,
+		status?: string,
+		search?: string
+	) {
+		return this.publicationModel.getAllPublicationsWithCreditStatus(userId, pagination, sorting, status, search);
+	}
+
 	async addCreditRequest(requestingUserId: number, publicationId: number) {
 		const publication = await this.publicationModel.findById(publicationId);
 		if (!publication) {

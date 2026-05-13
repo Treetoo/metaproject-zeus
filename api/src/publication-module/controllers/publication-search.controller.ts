@@ -13,7 +13,7 @@ export class PublicationSearchController {
 	constructor(
 		private readonly publicationService: PublicationService,
 		private readonly researcherService: ResearcherService
-	) { }
+	) {}
 
 	@Get('/publication-id/:id/:type')
 	@Public()
