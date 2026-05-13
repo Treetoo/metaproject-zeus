@@ -12,12 +12,12 @@ import { PerunDataService } from '../services/perun-data.service';
 export class PerunWebhookController {
 	constructor(private readonly perunDataService: PerunDataService) {}
 
-	@Put('orcid')
+	@Put('users')
 	@HttpCode(200)
 	@ApiOperation({
-		summary: 'Receive Perun data with ORCID',
+		summary: 'Receive Metacentrum users',
 		description:
-			'Endpoint to receive data from Perun containing ORCID information. This endpoint is designed to be called by the generic_sender.py script from Perun. Requires Basic Auth authentication configured via PERUN_WEBHOOK_SECRET environment variable.'
+			'Endpoint to receive data from Perun containing MetaCentrum users information. This endpoint is designed to be called by the generic_sender.py script from Perun. Requires Basic Auth authentication configured via PERUN_WEBHOOK_SECRET environment variable.'
 	})
 	@ApiHeader({
 		name: 'Authorization',

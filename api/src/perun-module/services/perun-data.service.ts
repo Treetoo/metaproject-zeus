@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { User, Orcid } from 'resource-manager-database';
+import { User, Orcid, Role } from 'resource-manager-database';
 import { PerunDataDto } from '../dto/perun-data.dto';
 
 @Injectable()
@@ -14,16 +14,25 @@ export class PerunDataService {
 		let processed = 0;
 
 		for (const [perunUserId, userEntry] of Object.entries(users)) {
-			const orcidArray = userEntry.attributes?.['urn:perun:user:attribute-def:virt:eduPersonORCID'] || [];
-			const persistentLogin =
-				userEntry.attributes?.['urn:perun:user:attribute-def:virt:login-namespace:einfraid-persistent'];
+			const attributes = userEntry.attributes || {};
+			const orcidArray = attributes['urn:perun:user:attribute-def:virt:eduPersonORCID'] || [];
+			const persistentLogin = attributes['urn:perun:user:attribute-def:virt:login-namespace:einfraid-persistent'];
+			const commonName = attributes['urn:perun:user:attribute-def:core:commonName'];
+			const displayName = attributes['urn:perun:user:attribute-def:core:displayName'];
+			const preferredMail = attributes['urn:perun:user:attribute-def:def:preferredMail'];
+			const username = attributes['urn:perun:user:attribute-def:virt:optional-login-namespace:einfra'];
 
 			if (!persistentLogin) {
 				this.logger.warn(`No persistent login for Perun user ${perunUserId}, skipping`);
 				continue;
 			}
 
-			const user = await this.dataSource.getRepository(User).findOne({
+			if (!preferredMail) {
+				this.logger.warn(`No email for Perun user ${perunUserId}, skipping`);
+				continue;
+			}
+
+			let user = await this.dataSource.getRepository(User).findOne({
 				where: {
 					source: 'perun',
 					externalId: persistentLogin
@@ -31,8 +40,22 @@ export class PerunDataService {
 			});
 
 			if (!user) {
-				this.logger.warn(`User not found for externalId: ${persistentLogin}`);
-				continue;
+				const defaultRole = await this.dataSource.getRepository(Role).findOne({
+					where: { name: 'USER' }
+				});
+
+				user = this.dataSource.getRepository(User).create({
+					source: 'perun',
+					externalId: persistentLogin,
+					email: preferredMail,
+					emailVerified: true,
+					username: username || persistentLogin.split('@')[0],
+					name: displayName || commonName || preferredMail,
+					roleId: defaultRole?.id || 1
+				});
+
+				user = await this.dataSource.getRepository(User).save(user);
+				this.logger.log(`Created new user ${user.username} (${user.id}) for einfraid: ${persistentLogin}`);
 			}
 
 			const existingOrcids = await this.dataSource.getRepository(Orcid).find({
