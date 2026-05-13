@@ -1,13 +1,8 @@
+import * as fs from 'fs';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { DataSource, FindManyOptions } from 'typeorm';
-import { Publication, Project, User } from 'resource-manager-database';
-
-interface ProjectWeight {
-	id: number;
-	name: string;
-	weight: number;
-}
+import { DataSource } from 'typeorm';
+import { User, PublicationStakeholder } from 'resource-manager-database';
 
 interface UserWeight {
 	id: number;
@@ -23,7 +18,7 @@ export class PublicationPropagationService {
 	private readonly OUTPUT_DIRECTORY = '/tmp/perun';
 	private readonly SERVICE_NAME = 'pbs_publication_fairshare';
 
-	constructor(private readonly dataSource: DataSource) {}
+	constructor(private readonly dataSource: DataSource) { }
 
 	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async propagatePublications() {
@@ -39,26 +34,13 @@ export class PublicationPropagationService {
 		}
 	}
 
-	async calculateFairshareWeights(): Promise<{ fileName: string; lines: number }> {
+	async calculateFairshareWeights(): Promise<{ fileName: string; lines: number; content: string }> {
 		const now = new Date();
 		const currentYear = now.getFullYear();
 		const yearSince = currentYear - this.HOW_OLD_PUBLICATIONS;
 
-		// Get all projects with their members
-		const projects = await this.dataSource.getRepository(Project).find({
-			relations: ['members']
-		} as FindManyOptions<Project>);
-
-		// Get all users and their memberships
-		const allUsers = await this.dataSource.getRepository(User).find({
-			relations: ['memberships']
-		} as FindManyOptions<User>);
-
-		// Get all approved publications
-		const allPublications = await this.dataSource.getRepository(Publication).find({
-			where: { status: 'approved' },
-			relations: ['owner']
-		});
+		// Get all users
+		const allUsers = await this.dataSource.getRepository(User).find();
 
 		// Build a map of userId -> user login
 		const userLogins = new Map<number, string>();
@@ -68,109 +50,57 @@ export class PublicationPropagationService {
 			}
 		}
 
-		// Build a map of userId -> user's publications (only approved ones within the time window)
-		const userPublications = new Map<number, Publication[]>();
-		for (const pub of allPublications) {
-			if (!pub.reviewedAt) continue;
+		// For each user: user.weight = 1 + sum(
+		//   publication(stakeholder.pubid).weight * weight_decay(publication(stakeholder.pubid)) * stakeholder.weight
+		// ) for all approved stakeholder records within time window
+		const allUsersWithWeights: UserWeight[] = [];
 
-			const reviewYear = new Date(pub.reviewedAt).getFullYear();
-			if (reviewYear < yearSince || reviewYear > currentYear) continue;
+		for (const user of allUsers) {
+			// Get all approved stakeholder records for this user
+			const stakeholderRecords = await this.dataSource.getRepository(PublicationStakeholder).find({
+				where: {
+					userId: user.id,
+					status: 'approved'
+				},
+				relations: ['publication']
+			});
 
-			const pubs = userPublications.get(pub.ownerId) || [];
-			pubs.push(pub);
-			userPublications.set(pub.ownerId, pubs);
-		}
+			let userWeight = 1; // Start with base weight of 1
 
-		// Track which users are assigned to which project
-		const userProjects = new Map<number, Set<number>>(); // userId -> set of projectIds
-		const userLoginsByProject = new Map<number, Map<number, UserWeight>>(); // projectId -> (userId -> UserWeight)
+			for (const stakeholder of stakeholderRecords) {
+				const pub = stakeholder.publication;
 
-		// Process each project
-		const projectWeights = new Map<number, ProjectWeight>();
+				// Only consider approved publications
+				if (pub.status !== 'approved' || !pub.reviewedAt) continue;
 
-		for (const project of projects) {
-			// Skip personal projects and non-active projects
-			if (project.isPersonal || project.status !== 'active') {
-				continue;
+				// Check if publication is within the time window
+				const reviewYear = new Date(pub.reviewedAt).getFullYear();
+				if (reviewYear < yearSince || reviewYear > currentYear) continue;
+
+				// Calculate decay factor
+				const decay = this.calculateAgeFactor(new Date(pub.reviewedAt));
+
+				// publication.weight * decay * stakeholder.weight
+				const pubWeight = pub.weight ?? 1;
+				const stakeholderWeight = stakeholder.weight ?? 1;
+				const contribution = pubWeight * decay * stakeholderWeight;
+
+				userWeight += contribution;
 			}
 
-			// This project acts as a fairshare group
-			const projectName = `G:${project.projectSlug}`;
-			let projectWeight = 1.0; // Base weight for the group itself
-
-			// Initialize user map for this project
-			userLoginsByProject.set(project.id, new Map());
-
-			// Get active members of this project
-			const activeMembers = project.members.filter((m) => m.status === 'active' || m.status === 'pending');
-
-			for (const member of activeMembers) {
-				// Add base weight for the member
-				projectWeight += 1.0;
-
-				// Track user's project assignment
-				if (!userProjects.has(member.userId)) {
-					userProjects.set(member.userId, new Set());
-				}
-				userProjects.get(member.userId)!.add(project.id);
-
-				const login = member.user.username || `user_${member.userId}`;
-				userLoginsByProject.get(project.id)!.set(member.userId, {
-					id: member.userId,
-					login,
-					group: projectName,
-					weight: 1.0
-				});
-
-				// Add publication weights for this user
-				const pubs = userPublications.get(member.userId) || [];
-				for (const pub of pubs) {
-					// Weight is equivalent to publication type/category rank
-					// Using the publication's weight field (1-3 scale from approval)
-					const pubWeight = (pub.weight ?? 1) * this.calculateAgeFactor(new Date(pub.reviewedAt!));
-					const userWeight = userLoginsByProject.get(project.id)!.get(member.userId)!;
-					userWeight.weight += pubWeight;
-				}
-			}
-
-			// Add publication weights to project (each publication counted once per project)
-			const seenPubIds = new Set<number>();
-			for (const member of activeMembers) {
-				const pubs = userPublications.get(member.userId) || [];
-				for (const pub of pubs) {
-					if (seenPubIds.has(pub.id)) continue;
-					seenPubIds.add(pub.id);
-
-					const pubWeight = (pub.weight ?? 1) * this.calculateAgeFactor(new Date(pub.reviewedAt!));
-					projectWeight += pubWeight;
-				}
-			}
-
-			projectWeights.set(project.id, {
-				id: project.id,
-				name: projectName,
-				weight: projectWeight
+			// Only include users with weight > 1 (i.e., they have stakeholder publications)
+			const login = userLogins.get(user.id) || `user_${user.id}`;
+			allUsersWithWeights.push({
+				login,
+				id: user.id,
+				group: 'root',
+				weight: userWeight
 			});
 		}
 
-		// Collect all users across all projects (each user appears in their primary project)
-		const allUsersWithWeights: UserWeight[] = [];
-		const seenUsers = new Set<number>();
-
-		for (const [, users] of userLoginsByProject.entries()) {
-			for (const [userId, userWeight] of users.entries()) {
-				if (!seenUsers.has(userId)) {
-					seenUsers.add(userId);
-					allUsersWithWeights.push(userWeight);
-				}
-			}
-		}
-
-		// Sort projects by weight (descending), then by name (ascending)
-		const projectsArray = Array.from(projectWeights.values()).sort((a, b) => {
-			if (b.weight !== a.weight) return b.weight - a.weight;
-			return a.name.localeCompare(b.name);
-		});
+		// Log results
+		this.logger.log(`Processed ${allUsers.length} users`);
+		this.logger.log(`${allUsersWithWeights.length} users have stakeholder publication weights`);
 
 		// Sort users by weight (descending), then by login (ascending)
 		allUsersWithWeights.sort((a, b) => {
@@ -182,22 +112,30 @@ export class PublicationPropagationService {
 		const lines: string[] = [];
 		let uid = 10;
 
-		// First write groups (projects)
-		for (const project of projectsArray) {
-			lines.push(`${project.name}\t${uid}\troot\t${Math.round(project.weight)}`);
-			uid++;
-		}
-
-		// Then write users
+		// Write users
 		for (const user of allUsersWithWeights) {
 			lines.push(`${user.login}\t${uid}\t${user.group}\t${Math.round(user.weight)}`);
 			uid++;
 		}
 
-		// Write to file (in a real implementation, this would write to the actual directory)
-		const fileName = `${this.OUTPUT_DIRECTORY}/${this.SERVICE_NAME}`;
+		const content = lines.join('\n');
 
-		return { fileName, lines: lines.length };
+		// Ensure output directory exists
+		if (!fs.existsSync(this.OUTPUT_DIRECTORY)) {
+			fs.mkdirSync(this.OUTPUT_DIRECTORY, { recursive: true });
+		}
+
+		// Write to file
+		const fileName = `${this.OUTPUT_DIRECTORY}/${this.SERVICE_NAME}`;
+		fs.writeFileSync(fileName, content);
+
+		this.logger.log(`File written to ${fileName} with ${lines.length} entries`);
+
+		return { fileName, lines: lines.length, content };
+	}
+
+	getFileName(): string {
+		return `${this.SERVICE_NAME}_${new Date().toISOString().split('T')[0]}.txt`;
 	}
 
 	/**

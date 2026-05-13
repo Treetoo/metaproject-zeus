@@ -217,13 +217,13 @@ export class PublicationService {
 					}
 
 					// Create stakeholder records for users with fairShareEligible = true
-					const stakeholderValues = input.creditors
-						.filter((c) => c.fairShareEligible)
-						.map((c) => ({
-							publicationId,
-							userId: c.userId,
-							status: 'approved' as const
-						}));
+					const stakeholders = input.creditors.filter((c) => c.fairShareEligible);
+					const stakeholderValues = stakeholders.map((c) => ({
+						publicationId,
+						userId: c.userId,
+						weight: 1 / stakeholders.length,
+						status: 'approved' as const
+					}));
 					if (stakeholderValues.length > 0) {
 						await manager
 							.createQueryBuilder()

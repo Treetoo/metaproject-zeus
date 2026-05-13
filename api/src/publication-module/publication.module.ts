@@ -15,6 +15,8 @@ import { PublicationApprovalService } from './services/publication-approval.serv
 import { PublicationApprovalController } from './controllers/publication-approval.controller';
 import { PublicationCreditApprovalController } from './controllers/publication-credit-approval.controller';
 import { ResearcherService } from './services/researcher.service';
+import { PublicationPropagationService } from './services/publication-propagation.service';
+import { PublicationPropagationController } from './controllers/publication-propagation.controller';
 
 @Module({
 	imports: [HttpModule, ProjectModule, ApiConfigModule],
@@ -26,7 +28,8 @@ import { ResearcherService } from './services/researcher.service';
 		PublicationModel,
 		ProjectPublicationModel,
 		PublicationApprovalService,
-		ResearcherService
+		ResearcherService,
+		PublicationPropagationService
 	],
 	controllers: [
 		PublicationSearchController,
@@ -34,7 +37,8 @@ import { ResearcherService } from './services/researcher.service';
 		ProjectPublicationController,
 		UserPublicationController,
 		PublicationApprovalController,
-		PublicationCreditApprovalController
+		PublicationCreditApprovalController,
+		PublicationPropagationController
 	]
 })
 export class PublicationModule {}

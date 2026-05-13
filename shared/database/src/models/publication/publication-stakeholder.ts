@@ -30,6 +30,9 @@ export class PublicationStakeholder {
 	})
 	status: 'pending' | 'approved' | 'rejected';
 
+	@Column({ type: 'float', nullable: true })
+	weight: number | null;
+
 	@Column(() => TimeEntity)
 	time: TimeEntity;
 }
