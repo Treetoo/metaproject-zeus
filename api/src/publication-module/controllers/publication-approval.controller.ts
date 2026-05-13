@@ -11,6 +11,7 @@ import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 import { PaginationMapper } from '../../config-module/mappers/pagination.mapper';
 import { GetSorting, Sorting } from '../../config-module/decorators/get-sorting';
 import { PublicationListDto } from '../dto/publication-list.dto';
+import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 
 @Controller('publications/approval')
 @ApiTags('Publication Approval')
@@ -19,6 +20,20 @@ export class PublicationApprovalController {
 		private readonly approvalService: PublicationApprovalService,
 		private readonly paginationMapper: PaginationMapper
 	) {}
+
+	@Get(':id/detail')
+	@MinRoleCheck(RoleEnum.DIRECTOR)
+	@ApiOperation({
+		summary: 'Get publication detail for review.',
+		description: 'Returns detailed information about a publication including creditors, stakeholders, and project.'
+	})
+	@ApiOkResponse({
+		description: 'Publication not found.',
+		type: PublicationNotFoundApiException
+	})
+	async getPublicationDetail(@Param('id') id: number) {
+		return this.approvalService.getPublicationDetail(id);
+	}
 
 	@Get()
 	@MinRoleCheck(RoleEnum.USER)

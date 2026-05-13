@@ -13,10 +13,56 @@ interface UserInfoResponse {
 	email: string;
 }
 
+interface CurrentUserResponse {
+	id: number;
+	username: string;
+	name: string;
+	email: string;
+	locale: string;
+	source: string;
+	externalId: string;
+	orcid: string[];
+}
+
 @Controller('/users')
 @ApiTags('Users')
 export class UserOrcidController {
 	constructor(private readonly usersModel: UsersModel) {}
+
+	@Get('me')
+	@MinRoleCheck(RoleEnum.USER)
+	@ApiOperation({
+		summary: 'Get current authenticated user info.',
+		description: 'Returns the profile of the currently authenticated user.'
+	})
+	@ApiOkResponse({
+		description: 'Current user info.',
+		schema: {
+			type: 'object',
+			properties: {
+				id: { type: 'number', example: 1 },
+				username: { type: 'string', example: 'johndoe' },
+				name: { type: 'string', example: 'John Doe' },
+				email: { type: 'string', example: 'johndoe@mail.muni.cz' },
+				locale: { type: 'string', example: 'en' },
+				source: { type: 'string', example: 'perun' },
+				externalId: { type: 'string', example: 'abc123' },
+				orcid: { type: 'array', items: { type: 'string' }, example: [['0000-0002-3237-9305']] }
+			}
+		}
+	})
+	public async getCurrentUser(@RequestUser() user: UserDto): Promise<CurrentUserResponse> {
+		return {
+			id: user.id,
+			username: user.username,
+			name: user.name,
+			email: user.email,
+			locale: user.locale,
+			source: user.source,
+			externalId: user.externalId,
+			orcid: user.orcid || []
+		};
+	}
 
 	@Get('orcid')
 	@MinRoleCheck(RoleEnum.USER)

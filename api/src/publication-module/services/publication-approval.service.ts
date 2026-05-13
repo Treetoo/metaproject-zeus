@@ -1,9 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { Brackets, DataSource } from 'typeorm';
-import { Publication, PublicationCredit } from 'resource-manager-database';
+import { Publication, PublicationCredit, PublicationStakeholder, ProjectPublication } from 'resource-manager-database';
 import { ApiException } from '../../error-module/api-exception';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
+
+export interface PublicationDetailDto {
+	id: number;
+	ownerId: number;
+	ownerName?: string;
+	ownerUsername?: string;
+	ownerEmail?: string;
+	title: string;
+	authors: string;
+	year: number;
+	journal: string;
+	source: string;
+	uniqueId: string;
+	url: string;
+	status: 'pending' | 'approved' | 'rejected';
+	createdAt?: string;
+	updatedAt?: string;
+	reviewerId?: number | null;
+	reviewedAt?: Date | null;
+	reviewerNote?: string | null;
+	weight?: number | null;
+	project?: {
+		id: number;
+		title: string;
+	} | null;
+	creditors: {
+		userId: number;
+		username: string;
+		name: string;
+		email: string;
+		status: 'pending' | 'approved' | 'rejected';
+	}[];
+	stakeholders: {
+		userId: number;
+		username: string;
+		name: string;
+		email: string;
+	}[];
+	requestedBy?: number;
+}
 
 @Injectable()
 export class PublicationApprovalService {
@@ -525,5 +565,94 @@ export class PublicationApprovalService {
 		});
 
 		return { headers, rows };
+	}
+
+	async getPublicationDetail(publicationId: number): Promise<PublicationDetailDto> {
+		const publication = await this.dataSource.getRepository(Publication).findOne({
+			where: { id: publicationId },
+			relations: ['owner']
+		});
+
+		if (!publication) {
+			throw new PublicationNotFoundApiException();
+		}
+
+		// Get project information via ProjectPublication
+		const projectPub = await this.dataSource
+			.createQueryBuilder()
+			.select('p.id', 'projectId')
+			.addSelect('p.title', 'projectTitle')
+			.from('Project', 'p')
+			.innerJoin(ProjectPublication, 'pp', 'pp.projectId = p.id')
+			.where('pp.publicationId = :publicationId', { publicationId })
+			.getRawOne();
+
+		// Get creditors with user info
+		const creditorsData = await this.dataSource
+			.createQueryBuilder()
+			.select('pc.userId', 'userId')
+			.addSelect('pc.status', 'status')
+			.addSelect('u.username', 'username')
+			.addSelect('u.name', 'name')
+			.addSelect('u.email', 'email')
+			.from(PublicationCredit, 'pc')
+			.innerJoin('User', 'u', 'u.id = pc.userId')
+			.where('pc.publicationId = :publicationId', { publicationId })
+			.getRawMany();
+
+		// Get stakeholders with user info
+		const stakeholdersData = await this.dataSource
+			.createQueryBuilder()
+			.select('ps.userId', 'userId')
+			.addSelect('ps.status', 'status')
+			.addSelect('u.username', 'username')
+			.addSelect('u.name', 'name')
+			.addSelect('u.email', 'email')
+			.from(PublicationStakeholder, 'ps')
+			.innerJoin('User', 'u', 'u.id = ps.userId')
+			.where('ps.publicationId = :publicationId', { publicationId })
+			.getRawMany();
+
+		return {
+			id: publication.id,
+			ownerId: publication.ownerId,
+			ownerName: publication.owner?.name,
+			ownerUsername: publication.owner?.username,
+			ownerEmail: publication.owner?.email,
+			title: publication.title,
+			authors: publication.author,
+			year: publication.year,
+			journal: publication.journal,
+			source: publication.source,
+			uniqueId: publication.uniqueId,
+			url: publication.url,
+			status: publication.status,
+			createdAt: publication.time?.createdAt,
+			updatedAt: publication.time?.updatedAt,
+			reviewerId: publication.reviewerId,
+			reviewedAt: publication.reviewedAt,
+			reviewerNote: publication.reviewerNote,
+			weight: publication.weight,
+			project: projectPub
+				? {
+						id: projectPub.projectId,
+						title: projectPub.projectTitle
+					}
+				: null,
+			creditors: creditorsData.map((c) => ({
+				userId: c.userId,
+				username: c.username,
+				name: c.name,
+				email: c.email,
+				status: c.status
+			})),
+			stakeholders: stakeholdersData.map((s) => ({
+				userId: s.userId,
+				username: s.username,
+				name: s.name,
+				email: s.email,
+				status: s.status
+			}))
+		};
 	}
 }

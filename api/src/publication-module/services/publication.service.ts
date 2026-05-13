@@ -32,7 +32,7 @@ export class PublicationService {
 		private readonly publicationModel: PublicationModel,
 		private readonly projectPublicationModel: ProjectPublicationModel,
 		private readonly apiPublicationService: ApiPublicationService
-	) {}
+	) { }
 
 	async getUserPublications(
 		userId: number,
@@ -198,18 +198,33 @@ export class PublicationService {
 					manager
 				);
 
-				// Check if project is personal and handle stakeholders accordingly
-				const project = await this.projectModel.getProject(input.project.projectId, false);
-				if (project?.isPersonal) {
-					// Add userId to stakeholderIds if not already present
-					if (!input.stakeholderIds?.includes(userId)) {
-						input.stakeholderIds = [...(input.stakeholderIds ?? []), userId];
+				// Handle creditors (which includes fair share and stakeholders)
+				if (input.creditors && input.creditors.length > 0) {
+					// Create credit records for all creditors
+					const creditValues = input.creditors.map((c) => ({
+						publicationId,
+						userId: c.userId,
+						status: 'approved' as const
+					}));
+					if (creditValues.length > 0) {
+						await manager
+							.createQueryBuilder()
+							.insert()
+							.into(PublicationCredit)
+							.values(creditValues)
+							.orIgnore()
+							.execute();
 					}
-					if (input.stakeholderIds && input.stakeholderIds.length > 0) {
-						const stakeholderValues = input.stakeholderIds.map((stakeholderId) => ({
+
+					// Create stakeholder records for users with fairShareEligible = true
+					const stakeholderValues = input.creditors
+						.filter((c) => c.fairShareEligible)
+						.map((c) => ({
 							publicationId,
-							userId: stakeholderId
+							userId: c.userId,
+							status: 'approved' as const
 						}));
+					if (stakeholderValues.length > 0) {
 						await manager
 							.createQueryBuilder()
 							.insert()

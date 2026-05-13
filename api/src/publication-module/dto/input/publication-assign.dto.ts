@@ -4,6 +4,12 @@ export class AssignPublicationDto {
 	projectId: number;
 }
 
+export type CreditorInput = {
+	userId: number;
+	fairShareEligible: boolean;
+	isStakeholder: boolean;
+};
+
 export class CreateOwnedPublicationDto {
 	title: string;
 	authors: string;
@@ -13,12 +19,12 @@ export class CreateOwnedPublicationDto {
 	uniqueId?: string;
 	project: AssignPublicationDto;
 	source: Exclude<PublicationIdentifierTypeDto, 'unknown'> | 'manual';
-	stakeholderIds?: number[];
+	creditors?: CreditorInput[];
 }
 
 export class CreateOwnedPublicationByIdDto {
 	uniqueId: string;
 	type: PublicationIdentifierTypeDto;
 	project: AssignPublicationDto;
-	stakeholderIds?: number[];
+	creditors?: CreditorInput[];
 }
