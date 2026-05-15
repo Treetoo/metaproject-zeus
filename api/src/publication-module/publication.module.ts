@@ -11,12 +11,13 @@ import { ProjectPublicationController } from './controllers/project-publication.
 import { UserPublicationController } from './controllers/user-publication.controller';
 import { PublicationModel } from './models/publication.model';
 import { ProjectPublicationModel } from './models/project-publication.model';
-import { PublicationApprovalService } from './services/publication-approval.service';
-import { PublicationApprovalController } from './controllers/publication-approval.controller';
-import { PublicationCreditApprovalController } from './controllers/publication-credit-approval.controller';
+import { PublicationRequestController } from './controllers/publication-request.controller';
+import { PublicationCreditController } from './controllers/publication-credit.controller';
 import { ResearcherService } from './services/researcher.service';
 import { PublicationPropagationService } from './services/publication-propagation.service';
 import { PublicationPropagationController } from './controllers/publication-propagation.controller';
+import { PublicationRequestService } from './services/publication-request.service';
+import { PublicationCreditService } from './services/publication-credit.service';
 
 @Module({
 	imports: [HttpModule, ProjectModule, ApiConfigModule],
@@ -27,7 +28,8 @@ import { PublicationPropagationController } from './controllers/publication-prop
 		PublicationService,
 		PublicationModel,
 		ProjectPublicationModel,
-		PublicationApprovalService,
+		PublicationRequestService,
+		PublicationCreditService,
 		ResearcherService,
 		PublicationPropagationService
 	],
@@ -36,9 +38,9 @@ import { PublicationPropagationController } from './controllers/publication-prop
 		PublicationController,
 		ProjectPublicationController,
 		UserPublicationController,
-		PublicationApprovalController,
-		PublicationCreditApprovalController,
+		PublicationRequestController,
+		PublicationCreditController,
 		PublicationPropagationController
 	]
 })
-export class PublicationModule {}
+export class PublicationModule { }

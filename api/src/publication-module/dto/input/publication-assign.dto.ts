@@ -18,7 +18,7 @@ export class CreateOwnedPublicationDto {
 	url: string;
 	uniqueId?: string;
 	project: AssignPublicationDto;
-	source: Exclude<PublicationIdentifierTypeDto, 'unknown'> | 'manual';
+	source: Exclude<PublicationIdentifierTypeDto, 'auto'> | 'manual';
 	creditors?: CreditorInput[];
 }
 

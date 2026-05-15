@@ -5,35 +5,20 @@ import { RequestUser } from '../../auth-module/decorators/user.decorator';
 import { UserDto } from '../../users-module/dtos/user.dto';
 import { MinRoleCheck } from '../../permission-module/decorators/min-role.decorator';
 import { RoleEnum } from '../../permission-module/models/role.enum';
-import { PublicationApprovalService } from '../services/publication-approval.service';
+import { PublicationCreditService } from '../services/publication-credit.service';
 import { GetPagination, Pagination } from '../../config-module/decorators/get-pagination';
 import { ApprovePublicationDto } from '../dto/input/approve-publication.dto';
 import { PaginationMapper } from '../../config-module/mappers/pagination.mapper';
 import { GetSorting, Sorting } from '../../config-module/decorators/get-sorting';
 import { PublicationListDto } from '../dto/publication-list.dto';
-import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
 
-@Controller('publications/approval')
-@ApiTags('Publication Approval')
-export class PublicationApprovalController {
+@Controller('publications/credit')
+@ApiTags('Publication Credit')
+export class PublicationCreditController {
 	constructor(
-		private readonly approvalService: PublicationApprovalService,
+		private readonly creditService: PublicationCreditService,
 		private readonly paginationMapper: PaginationMapper
-	) {}
-
-	@Get(':id/detail')
-	@MinRoleCheck(RoleEnum.DIRECTOR)
-	@ApiOperation({
-		summary: 'Get publication detail for review.',
-		description: 'Returns detailed information about a publication including creditors, stakeholders, and project.'
-	})
-	@ApiOkResponse({
-		description: 'Publication not found.',
-		type: PublicationNotFoundApiException
-	})
-	async getPublicationDetail(@Param('id') id: number) {
-		return this.approvalService.getPublicationDetail(id);
-	}
+	) { }
 
 	@Get()
 	@MinRoleCheck(RoleEnum.USER)
@@ -41,24 +26,19 @@ export class PublicationApprovalController {
 		name: 'status',
 		required: false,
 		enum: ['pending', 'approved', 'rejected'],
-		description: 'Filter by status'
+		description: 'Filter by credit status'
 	})
 	@ApiQuery({ name: 'search', required: false, description: 'Search by title, authors, journal, or unique ID' })
-	@ApiOkResponse({ description: 'Publication requests', type: PublicationListDto })
-	async listPublicationRequests(
+	@ApiOkResponse({ description: 'Credit requests', type: PublicationListDto })
+	async listCreditRequests(
 		@GetPagination() pagination: Pagination,
 		@GetSorting() sorting: Sorting,
 		@Query('status') status?: string,
 		@Query('search') search?: string
 	) {
-		const [publications, count] = await this.approvalService.getPublicationRequests(
-			pagination,
-			sorting,
-			status,
-			search
-		);
+		const [publications, count] = await this.creditService.getCreditRequests(pagination, sorting, status, search);
 
-		const items = publications.map((publication) => ({
+		const items = publications.map((publication: any) => ({
 			id: publication.id,
 			publicationId: publication.id,
 			title: publication.title,
@@ -67,8 +47,8 @@ export class PublicationApprovalController {
 			journal: publication.journal,
 			uniqueId: publication.uniqueId,
 			url: publication.url,
-			status: publication.status,
-			requestedBy: publication.ownerId,
+			status: publication.creditStatus,
+			requestedBy: publication.requestedBy,
 			createdAt: publication.time?.createdAt
 		}));
 
@@ -78,27 +58,27 @@ export class PublicationApprovalController {
 	@Post(':id/approve')
 	@MinRoleCheck(RoleEnum.DIRECTOR)
 	@ApiOperation({
-		summary: 'Approve adding a publication.',
-		description: 'Approves adding a publication.'
+		summary: 'Approve credit request for a publication.',
+		description: 'Approves the credit request for the specified publication.'
 	})
 	@ApiCreatedResponse({
-		description: 'Publications approved.'
+		description: 'Credit request approved.'
 	})
 	async approve(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: ApprovePublicationDto) {
-		return this.approvalService.approvePublication(id, user.id, body);
+		return this.creditService.approveCreditRequest(id, user.id, body);
 	}
 
 	@Post(':id/reject')
 	@MinRoleCheck(RoleEnum.DIRECTOR)
 	@ApiOperation({
-		summary: 'Reject adding a publications.',
-		description: 'Rejects adding a publication.'
+		summary: 'Reject credit request for a publication.',
+		description: 'Rejects the credit request for the specified publication.'
 	})
 	@ApiCreatedResponse({
-		description: 'Publications rejected.'
+		description: 'Credit request rejected.'
 	})
 	async reject(@Param('id') id: number, @RequestUser() user: UserDto, @Body() body: ApprovePublicationDto) {
-		return this.approvalService.rejectPublication(id, user.id, body);
+		return this.creditService.rejectCreditRequest(id, user.id, body);
 	}
 
 	@Get('export')
@@ -107,7 +87,7 @@ export class PublicationApprovalController {
 		name: 'status',
 		required: false,
 		enum: ['pending', 'approved', 'rejected'],
-		description: 'Filter by status'
+		description: 'Filter by credit status'
 	})
 	@ApiQuery({ name: 'search', required: false, description: 'Search by title, authors, journal, or unique ID' })
 	@ApiQuery({
@@ -126,8 +106,8 @@ export class PublicationApprovalController {
 		description:
 			'Comma-separated list of fields to export (title,authors,journal,year,uniqueId,status,createdAt,reviewedAt,weight,ownerId)'
 	})
-	@ApiOperation({ summary: 'Export publications as CSV' })
-	async exportPublications(
+	@ApiOperation({ summary: 'Export credit requests as CSV' })
+	async exportCreditRequests(
 		@Res() res: Response,
 		@Query('status') status?: string,
 		@Query('search') search?: string,
@@ -136,7 +116,7 @@ export class PublicationApprovalController {
 		@Query('fields') fields?: string
 	) {
 		const fieldArray = fields ? fields.split(',').map((f) => f.trim()) : [];
-		const { headers, rows } = await this.approvalService.exportPublications(
+		const { headers, rows } = await this.creditService.exportCreditRequests(
 			status,
 			search,
 			startDate,
@@ -151,7 +131,7 @@ export class PublicationApprovalController {
 		res.setHeader('Pragma', 'no-cache');
 		res.setHeader(
 			'Content-Disposition',
-			`attachment; filename="publications-export-${new Date().toISOString().split('T')[0]}.csv"`
+			`attachment; filename="credit-requests-export-${new Date().toISOString().split('T')[0]}.csv"`
 		);
 		res.send(csvContent);
 	}

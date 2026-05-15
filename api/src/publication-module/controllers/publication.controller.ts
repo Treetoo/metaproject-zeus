@@ -1,9 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Delete, Get, HttpCode, Param } from '@nestjs/common';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequestUser } from '../../auth-module/decorators/user.decorator';
 import { UserDto } from '../../users-module/dtos/user.dto';
 import { PublicationService } from '../services/publication.service';
-import { PublicationRequestListDto } from '../dto/input/publication-input.dto';
 import { PublicationListDto } from '../dto/publication-list.dto';
 import { ProjectNotFoundApiException } from '../../error-module/errors/projects/project-not-found.api-exception';
 import { GetPagination, Pagination } from '../../config-module/decorators/get-pagination';
@@ -76,27 +75,4 @@ export class PublicationController {
 		await this.publicationService.deleteProjectPublication(publicationId, user.id, isStepUp);
 	}
 
-	@Post('/:projectId')
-	@HttpCode(201)
-	@MinRoleCheck(RoleEnum.USER)
-	@ApiOperation({
-		summary: 'Add publications to project',
-		description: 'Adds publications to project. This is bulk endpoint, either all publications are added or none.'
-	})
-	@ApiCreatedResponse({
-		description: 'Publications added to project.'
-	})
-	public async getPublicationByDoi(
-		@Param('projectId') projectId: number,
-		@RequestUser() user: UserDto,
-		@Body() publicationsBody: PublicationRequestListDto,
-		@IsStepUp() isStepUp: boolean
-	) {
-		await this.publicationService.addPublicationToProject(
-			user.id,
-			projectId,
-			publicationsBody.publications,
-			isStepUp
-		);
-	}
 }

@@ -110,12 +110,12 @@ export class PublicationService {
 			.execute();
 	}
 
-	async getPublicationByIdentifier(identifier: string, type: PublicationIdentifierTypeDto = 'unknown') {
-		if (type === 'unknown') {
+	async getPublicationByIdentifier(identifier: string, type: PublicationIdentifierTypeDto = 'auto') {
+		if (type === 'auto') {
 			type = IdentifierDetectionService.detectPublicationIdType(identifier);
 		}
 
-		if (type === 'unknown') {
+		if (type === 'auto') {
 			throw new ApiException(
 				400,
 				'Unknown identifier type. Please specify the identifier type (DOI, PMID, ISBN, etc.) and try again.',

@@ -9,7 +9,7 @@ import { PublicationNotFoundApiException } from '../../error-module/errors/publi
 import { PublicationMapper } from '../mapper/publication.mapper';
 import { ResearcherWorksListDto } from '../dto/researcher-works.dto';
 import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
-import { ApiException } from '../../error-module/api-exception';
+import { PublicationInvalidIdentifierTypeException } from '../../error-module/errors/publications/publication-invalid-identifier-type.api-exception';
 
 type DoiResolver = {
 	name: string;
@@ -58,20 +58,26 @@ export class ApiPublicationService {
 		if (type === 'isbn') return await this.getPublicationByIsbn(id);
 		if (type === 'openalex') return await this.getPublicationByOpenAlexWorkId(id);
 
-		throw new ApiException(400, 'Invalid identifier type', 400);
+		throw new PublicationInvalidIdentifierTypeException();
 	}
 
 	async getPublicationsByResearcherIdAndType(id: string, type: string): Promise<ResearcherWorksListDto> {
 		if (type === 'orcid') return await this.getWorksByOrcidId(id);
 		if (type === 'res_openalex') return await this.getWorksByOpenAlexAuthorId(id);
 
-		throw new ApiException(400, 'Invalid identifier type', 400);
+		throw new PublicationInvalidIdentifierTypeException();
 	}
 
 	async getPublicationByPubmedId(pmid: string): Promise<PublicationDto> {
 		const baseUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 		const endPoint = `esummary.fcgi?db=pubmed&id=${pmid}&retmode=json`;
 		const response = await this.fetchFromExternalApi(baseUrl, endPoint);
+
+		if (!response.data.result || response.data.result[pmid].error) {
+			const errorMessage = response.data.result?.error?.Message || 'Publication not found on PubMed.';
+			throw new PublicationNotFoundApiException(errorMessage);
+		}
+
 		return this.publicationMapper.mapPubmedApiResponseToDto(response.data.result, pmid);
 	}
 

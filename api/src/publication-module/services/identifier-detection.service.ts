@@ -22,14 +22,14 @@ export class IdentifierDetectionService {
 		const matches = this.publicationPatterns.filter(({ pattern }) => pattern.test(trimmed)).map(({ type }) => type);
 
 		if (matches.length === 0) {
-			return 'unknown';
+			return 'auto';
 		}
 
 		if (matches.length === 1) {
 			return matches[0];
 		}
 
-		return 'unknown';
+		return 'auto';
 	}
 
 	static detectResearcherIdType(id: string): ResearcherIdentifierTypeDto {
@@ -37,13 +37,13 @@ export class IdentifierDetectionService {
 		const matches = this.researcherPatterns.filter(({ pattern }) => pattern.test(trimmed)).map(({ type }) => type);
 
 		if (matches.length === 0) {
-			return 'unknown';
+			return 'auto';
 		}
 
 		if (matches.length === 1) {
 			return matches[0];
 		}
 
-		return 'unknown';
+		return 'auto';
 	}
 }

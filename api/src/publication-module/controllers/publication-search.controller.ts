@@ -1,50 +1,61 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { MinRoleCheck } from 'src/permission-module/decorators/min-role.decorator';
+import { RoleEnum } from 'src/permission-module/models/role.enum';
 import { PublicationDto } from '../dto/publication.dto';
 import { PublicationNotFoundApiException } from '../../error-module/errors/publications/publication-not-found.api-exception';
-import { Public } from '../../auth-module/decorators/public.decorator';
+import { PublicationInvalidIdentifierTypeException } from '../../error-module/errors/publications/publication-invalid-identifier-type.api-exception';
 import { ResearcherService } from '../services/researcher.service';
 import { PublicationService } from '../services/publication.service';
 import { PublicationIdentifierTypeDto } from '../dto/identifier-type.dto';
+import { ResearcherWorksListDto } from '../dto/researcher-works.dto';
 
 @Controller('/publication-search')
-@ApiTags('Publication')
+@ApiTags('Publication Search')
 export class PublicationSearchController {
 	constructor(
 		private readonly publicationService: PublicationService,
 		private readonly researcherService: ResearcherService
 	) {}
 
-	@Get('/publication-id/:id/:type')
-	@Public()
+	@MinRoleCheck(RoleEnum.USER)
+	@Get('/publication-id/:type/:id')
 	@ApiOperation({
-		summary: 'Get publication by DOI.',
-		description: 'Get publication by DOI.'
+		summary: 'Get publication by publication id and type.',
+		description: 'Returns a publication by type and its id.'
 	})
 	@ApiOkResponse({
 		description: 'Publication.',
 		type: PublicationDto
 	})
+	@ApiBadRequestResponse({
+		description: 'Invalid identifier type.',
+		type: PublicationInvalidIdentifierTypeException
+	})
 	@ApiNotFoundResponse({
-		description: 'Publication with DOI not found.',
+		description: 'Publication with given ID and type not found.',
 		type: PublicationNotFoundApiException
 	})
-	public async getPublicationById(@Param('id') id: string, @Param('type') type: PublicationIdentifierTypeDto) {
+	public async getPublicationById(@Param('type') type: PublicationIdentifierTypeDto, @Param('id') id: string) {
 		return this.publicationService.getPublicationByIdentifier(id, type);
 	}
 
+	@MinRoleCheck(RoleEnum.USER)
 	@Get('/researcher-id/:id/:type')
-	@Public()
 	@ApiOperation({
 		summary: 'Get publications by researcher ID.',
-		description: 'Get publications by researcher ID.'
+		description: 'Returns a list of publications by researcher ID and its type.'
 	})
 	@ApiOkResponse({
 		description: 'ID.',
-		type: PublicationDto
+		type: ResearcherWorksListDto
+	})
+	@ApiBadRequestResponse({
+		description: 'Invalid identifier type.',
+		type: PublicationInvalidIdentifierTypeException
 	})
 	@ApiNotFoundResponse({
-		description: 'Researcher ID not found.',
+		description: 'Researcher with given ID and type not found.',
 		type: PublicationNotFoundApiException
 	})
 	public async getPublicationByResearherId(@Param('id') id: string, @Param('type') type: string) {

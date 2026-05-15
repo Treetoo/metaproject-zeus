@@ -67,7 +67,18 @@ async function bootstrap() {
 			},
 			{
 				name: 'Project',
-				tags: ['Project', 'Allocation', 'Resource', 'Publication']
+				tags: ['Project', 'Allocation', 'Resource']
+			},
+			{
+				name: 'Publication',
+				tags: [
+					'Publication',
+					'Publication Search',
+					'Publication Credit',
+					'Publication Request',
+					'Publication Propagation',
+					'My Publications'
+				]
 			},
 			{
 				name: 'User',

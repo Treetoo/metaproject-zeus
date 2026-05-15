@@ -5,7 +5,7 @@ export type PublicationIdentifierTypeDto =
 	| 'isbn'
 	| 'orcid'
 	| 'nma'
-	| 'unknown'
+	| 'auto'
 	| 'openalex'
 	| 'manual';
-export type ResearcherIdentifierTypeDto = 'orcid' | 'res_openalex' | 'unknown';
+export type ResearcherIdentifierTypeDto = 'orcid' | 'res_openalex' | 'auto';
